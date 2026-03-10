@@ -1,61 +1,101 @@
-<div align="center">
-  <h1>RouteForge</h1>
-  <p>CCNA + CCNP learning platform with labs, CLI practice, topology builder, calculators, and structured modules.</p>
-  <p><strong>Built for focused study:</strong> learn, practice, validate, repeat.</p>
-</div>
+# RouteForge
+
+RouteForge is a browser-first CCNA/CCNP learning platform that combines structured study with hands-on practice. It ships with guided labs, a CLI simulator, a topology builder, subnet training, and daily progress tracking.
 
 ---
 
-## Table of Contents
-1. Overview
-2. Key Features
-3. Modules
-4. Quick Start
-5. Project Structure
-6. Deploy
-7. Data & Persistence
-8. Contributing
-9. License
+**Highlights**
+- Structured CCNA and CCNP learning modules with real CLI examples.
+- Interactive labs with step-by-step validation using CLI history.
+- CLI simulator with a searchable command database.
+- Drag-and-drop topology builder with cable types and port-level wiring.
+- Subnet trainer, calculators, flashcards, quizzes, and cheat sheets.
+- Dashboard with daily questions, recommendations, and progress insights.
 
 ---
 
-## Overview
-RouteForge is a lightweight, browser-first networking lab environment that blends structured learning with hands-on practice. It includes a CCNA/CCNP command reference, labs with auto-validation, and an interactive topology builder so users can connect devices and practice real CLI workflows.
+**Modules**
+- Dashboard
+- Learn
+- Labs
+- CLI Simulator
+- Topology Builder
+- Tools (subnet trainer, calculators, flashcards, cheat sheets)
 
 ---
 
-## Key Features
-- Structured CCNA/CCNP learning modules with real CLI examples
-- CCNA/CCNP command reference with filters and explanations
-- Interactive CLI simulator with searchable command DB
-- Drag-and-drop topology builder with cable types + port-level wiring
-- Labs with auto-validation using CLI history
-- Subnet trainer + networking calculators
-- Flashcards, quizzes, and cheat sheets
-- Dashboard with daily question and progress tracking
+**Tech Stack**
+- Node.js (>=18)
+- Express (API + static hosting)
+- Vanilla HTML, CSS, and JavaScript
+- `serverless-http` for serverless adapters
 
 ---
 
-## Modules
-- **Dashboard**: daily study flow, progress, recommendations
-- **Learn**: structured modules + command reference
-- **Labs**: step-by-step CLI practice with validation
-- **CLI**: simulator + command search
-- **Topology**: wiring practice with ports and cable types
-- **Tools**: subnet trainer, calculators, flashcards, cheat sheets
+**Quick Start**
+1. Install dependencies:
 
----
-
-## Quick Start
 ```bash
 npm install
+```
+
+2. Start the server:
+
+```bash
 npm start
 ```
-Open `http://localhost:3000`.
+
+3. Open in your browser:
+
+```
+http://localhost:3000
+```
 
 ---
 
-## Project Structure
+**Scripts**
+- `npm start`: start the Express server.
+- `npm run dev`: same as `start` (simple local dev mode).
+- `npm run generate:practice`: generate practice data.
+- `npm run validate:practice`: validate practice data.
+
+---
+
+**API Overview**
+All API routes are served under `/api`.
+
+```
+GET    /api/topics?track=ccna|ccnp
+GET    /api/topics/:id
+GET    /api/quizzes?level=...&count=...
+GET    /api/quiz-bank?level=...&topic=...&q=...&page=...&pageSize=...
+GET    /api/daily-question
+GET    /api/subnet-questions?difficulty=...
+GET    /api/labs
+GET    /api/flashcards
+GET    /api/cli-commands?q=...
+GET    /api/progress
+POST   /api/progress/quiz
+POST   /api/progress/subnet
+POST   /api/progress/lab
+POST   /api/progress/reset
+GET    /api/dashboard
+```
+
+Health check:
+
+```
+GET /health
+```
+
+---
+
+**Data & Persistence**
+Progress and content data live in `data/`. Local development writes to `data/progress.json`. For production, use a real database or a hosted key-value store because file writes do not persist on most serverless deployments.
+
+---
+
+**Project Structure**
 ```
 RouteForge/
   server/
@@ -98,46 +138,20 @@ RouteForge/
 
 ---
 
-## Deploy
-
-### Vercel
-1. Push to GitHub.
-2. Import repo in Vercel.
-3. Framework preset: `Other`.
-4. Deploy.
-
-Notes:
-- Vercel serves `public/` as static assets.
-- `/api/*` routes are handled by `api/[...path].js`.
-- File writes (e.g., `data/progress.json`) do not persist on Vercel.
-
-### Render
-Use the included `render.yaml` or:
-- Build command: `npm install`
-- Start command: `npm start`
-
-### Railway
-- Deploy from GitHub
-- Start command: `npm start`
-
-### Netlify
-Netlify config is included, but API handling requires functions.
-If you want Netlify deployment, I can align it to the current Express layout.
+**Deploy**
+- Vercel: import repo, choose framework preset `Other`, deploy.
+- Render: build `npm install`, start `npm start`.
+- Railway: start `npm start`.
+- Netlify: static hosting is fine, but API needs functions to match the Express endpoints.
 
 ---
 
-## Data & Persistence
-Progress is stored in `data/progress.json` for local use.
-For production persistence, use a database or Vercel KV/Supabase/Postgres.
+**Contributing**
+1. Fork the repo.
+2. Create a feature branch.
+3. Open a PR.
 
 ---
 
-## Contributing
-1. Fork the repo
-2. Create a feature branch
-3. Open a PR
-
----
-
-## License
+**License**
 MIT
