@@ -1,0 +1,103 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Engine</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="quizzes">
+  <header class="topbar">
+    <nav class="nav">
+      <a class="brand" href="index.html">RouteForge NetLab</a>
+      <div class="nav-links">
+        <a href="index.html">Dashboard</a>
+        <a href="learn.html">Learn</a>
+        <a class="active" href="quizzes.html">Quizzes</a>
+        <a href="subnet-trainer.html">Subnet</a>
+        <a href="calculators.html">Calculators</a>
+        <a href="labs.html">Labs</a>
+        <a href="flashcards.html">Flashcards</a>
+        <a href="cli-simulator.html">CLI</a>
+        <a href="topology-builder.html">Topology</a>
+        <a href="cheat-sheets.html">Cheat Sheets</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>Exam Quiz Engine</h1>
+      <p>Practice by level with random question generation, timer, explanations, and score tracking.</p>
+      <div class="toolbar">
+        <div>
+          <label for="quiz-level">Difficulty</label>
+          <select id="quiz-level">
+            <option>CCNA beginner</option>
+            <option>CCNA advanced</option>
+            <option>CCNP level</option>
+          </select>
+        </div>
+        <div>
+          <label for="quiz-count">Questions</label>
+          <input id="quiz-count" type="number" value="10" min="5" max="30">
+        </div>
+        <div>
+          <label for="quiz-mode">Mode</label>
+          <select id="quiz-mode">
+            <option value="practice">Practice mode</option>
+            <option value="exam">Exam mode (20 min)</option>
+          </select>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button id="start-quiz" class="btn btn-primary">Start Quiz</button>
+        <button id="next-question">Next Question</button>
+      </div>
+      <div class="stat-inline">
+        <span>Timer: <strong id="quiz-timer">00:00</strong></span>
+        <span>Score: <strong id="quiz-score">0</strong></span>
+        <span id="quiz-status"></span>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:14px;">
+      <h3 id="quiz-question">Click Start Quiz to begin.</h3>
+      <div id="quiz-options" class="grid"></div>
+      <div id="quiz-explanation"></div>
+      <div id="quiz-result"></div>
+    </section>
+
+    <section class="card" style="margin-top:14px;">
+      <h3>Question Bank</h3>
+      <p class="muted">Browse the full question library with paging and filters.</p>
+      <div class="toolbar">
+        <input id="bank-search" placeholder="Search by question, topic, or keyword">
+        <input id="bank-topic" placeholder="Filter by topic (optional)" style="max-width:220px;">
+        <select id="bank-level" style="max-width:200px;">
+          <option value="all">All levels</option>
+          <option value="CCNA beginner">CCNA beginner</option>
+          <option value="CCNA advanced">CCNA advanced</option>
+          <option value="CCNP level">CCNP level</option>
+        </select>
+        <select id="bank-page-size" style="max-width:160px;">
+          <option value="10">10 per page</option>
+          <option value="20" selected>20 per page</option>
+          <option value="30">30 per page</option>
+        </select>
+      </div>
+      <div class="toolbar" style="margin-top:6px; align-items:center;">
+        <button id="bank-prev">Prev</button>
+        <button id="bank-next">Next</button>
+        <span id="bank-page-info" class="muted"></span>
+        <span id="bank-total" class="muted"></span>
+      </div>
+      <div id="bank-results" class="grid" style="margin-top:10px;"></div>
+    </section>
+  </main>
+
+  <script src="js/progress.js" defer></script>
+  <script src="js/main.js" defer></script>
+  <script src="js/quiz-engine.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subnet Speed Trainer</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="subnet">
+  <header class="topbar">
+    <nav class="nav">
+      <a class="brand" href="index.html">RouteForge NetLab</a>
+      <div class="nav-links">
+        <a href="index.html">Dashboard</a>
+        <a href="learn.html">Learn</a>
+        <a href="quizzes.html">Quizzes</a>
+        <a class="active" href="subnet-trainer.html">Subnet</a>
+        <a href="calculators.html">Calculators</a>
+        <a href="labs.html">Labs</a>
+        <a href="flashcards.html">Flashcards</a>
+        <a href="cli-simulator.html">CLI</a>
+        <a href="topology-builder.html">Topology</a>
+        <a href="cheat-sheets.html">Cheat Sheets</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>Subnetting Speed Challenge</h1>
+      <p>Practice and exam modes for network, broadcast, host ranges, block size, and CIDR/mask conversions.</p>
+      <div class="toolbar">
+        <div>
+          <label for="subnet-mode">Mode</label>
+          <select id="subnet-mode">
+            <option value="practice">Practice mode</option>
+            <option value="exam">Exam mode (15 questions / 10 min)</option>
+          </select>
+        </div>
+        <div>
+          <label for="subnet-difficulty">Difficulty</label>
+          <select id="subnet-difficulty">
+            <option value="easy">Easy (/24 - /30)</option>
+            <option value="medium">Medium (/20 - /30)</option>
+            <option value="hard">Hard (/16 - /30)</option>
+          </select>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button id="start-subnet" class="btn btn-primary">Start Session</button>
+        <button id="next-subnet">Next Problem</button>
+        <button id="finish-subnet">Finish Session</button>
+      </div>
+      <div class="stat-inline">
+        <span>Timer: <strong id="subnet-timer">00:00</strong></span>
+        <span>Score: <strong id="subnet-score">0</strong></span>
+        <span>Solved: <strong id="subnet-asked">0</strong></span>
+        <span>Accuracy: <strong id="subnet-accuracy">0%</strong></span>
+        <span>Streak: <strong id="subnet-streak">0 (best 0)</strong></span>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:14px;">
+      <h3 id="subnet-prompt">Start a session to generate a subnetting question.</h3>
+      <p class="muted">Question Type: <span id="subnet-question-type">-</span></p>
+      <label for="subnet-answer">Your answer</label>
+      <input id="subnet-answer" placeholder="Example: 192.168.1.0 or /27 or 62">
+      <div class="toolbar">
+        <button id="submit-subnet" class="btn btn-primary">Check</button>
+      </div>
+      <div id="subnet-feedback"></div>
+      <div id="subnet-result"></div>
+    </section>
+  </main>
+
+  <script src="js/progress.js" defer></script>
+  <script src="js/main.js" defer></script>
+  <script src="js/subnet-engine.js" defer></script>
+</body>
+</html>

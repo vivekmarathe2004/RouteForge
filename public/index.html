@@ -1,0 +1,92 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RouteForge Network Lab Platform</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="dashboard">
+  <header class="topbar">
+    <nav class="nav">
+      <a class="brand" href="index.html">RouteForge NetLab</a>
+      <div class="nav-links">
+        <a class="active" href="index.html">Dashboard</a>
+        <a href="learn.html">Learn</a>
+        <a href="quizzes.html">Quizzes</a>
+        <a href="subnet-trainer.html">Subnet</a>
+        <a href="calculators.html">Calculators</a>
+        <a href="labs.html">Labs</a>
+        <a href="flashcards.html">Flashcards</a>
+        <a href="cli-simulator.html">CLI</a>
+        <a href="topology-builder.html">Topology</a>
+        <a href="cheat-sheets.html">Cheat Sheets</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container" id="dashboard-root">
+    <section class="hero">
+      <h1>CCNA + CCNP Training Dashboard</h1>
+      <p>Build routing and switching skills with quizzes, subnet speed rounds, CLI simulation, labs, and review tools.</p>
+      <div class="toolbar">
+        <button id="subnet-shortcut" class="btn btn-primary">Start Subnet Speed Trainer</button>
+        <button id="reset-progress" class="btn btn-danger">Reset Progress</button>
+      </div>
+    </section>
+
+    <section class="grid grid-4" style="margin-top:14px;">
+      <article class="card">
+        <h3>Quizzes Completed</h3>
+        <p id="stat-quizzes" class="value">0</p>
+      </article>
+      <article class="card">
+        <h3>Best Quiz Score</h3>
+        <p id="stat-best" class="value">0%</p>
+      </article>
+      <article class="card">
+        <h3>Subnet Attempts</h3>
+        <p id="stat-subnet" class="value">0</p>
+      </article>
+      <article class="card">
+        <h3>Labs Completed</h3>
+        <p id="stat-labs" class="value">0</p>
+      </article>
+    </section>
+
+    <section class="grid grid-3" style="margin-top:14px;">
+      <article class="card">
+        <h3>Daily Networking Question</h3>
+        <div id="daily-question" class="muted">Loading...</div>
+      </article>
+      <article class="card">
+        <h3>Recent Quiz Scores</h3>
+        <div id="recent-scores" class="grid" style="gap:8px;"></div>
+      </article>
+      <article class="card">
+        <h3>Recommended Topics</h3>
+        <div id="recommended-topics" class="chip-row"></div>
+      </article>
+    </section>
+
+    <section class="card" style="margin-top:14px;">
+      <h3>Keyboard Shortcuts</h3>
+      <table class="shortcut-table">
+        <thead>
+          <tr><th>Shortcut</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="kbd">Alt + D</span></td><td>Dashboard</td></tr>
+          <tr><td><span class="kbd">Alt + L</span></td><td>Learn modules</td></tr>
+          <tr><td><span class="kbd">Alt + Q</span></td><td>Quiz engine</td></tr>
+          <tr><td><span class="kbd">Alt + S</span></td><td>Subnet trainer</td></tr>
+          <tr><td><span class="kbd">Alt + T</span></td><td>CLI simulator</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="js/progress.js" defer></script>
+  <script src="js/main.js" defer></script>
+</body>
+</html>

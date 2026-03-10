@@ -1,0 +1,133 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Networking Calculators</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="calculators">
+  <header class="topbar">
+    <nav class="nav">
+      <a class="brand" href="index.html">RouteForge NetLab</a>
+      <div class="nav-links">
+        <a href="index.html">Dashboard</a>
+        <a href="learn.html">Learn</a>
+        <a href="quizzes.html">Quizzes</a>
+        <a href="subnet-trainer.html">Subnet</a>
+        <a class="active" href="calculators.html">Calculators</a>
+        <a href="labs.html">Labs</a>
+        <a href="flashcards.html">Flashcards</a>
+        <a href="cli-simulator.html">CLI</a>
+        <a href="topology-builder.html">Topology</a>
+        <a href="cheat-sheets.html">Cheat Sheets</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>Network Calculators</h1>
+      <p>All tools run in browser JavaScript for fast CCNA/CCNP calculations.</p>
+    </section>
+
+    <section class="grid grid-3 calc-grid">
+      <article class="card calc-card">
+        <h3>Subnet Calculator</h3>
+        <label for="calc-subnet-ip">IPv4</label>
+        <input id="calc-subnet-ip" placeholder="192.168.10.25">
+        <label for="calc-subnet-cidr">CIDR</label>
+        <input id="calc-subnet-cidr" type="number" value="24" min="0" max="32">
+        <button id="calc-subnet-btn" class="btn btn-primary">Calculate</button>
+        <p id="calc-subnet-result" class="muted"></p>
+      </article>
+
+      <article class="card calc-card">
+        <h3>CIDR Calculator</h3>
+        <label for="calc-cidr-mask">Subnet Mask</label>
+        <input id="calc-cidr-mask" placeholder="255.255.255.0">
+        <button id="calc-cidr-btn" class="btn btn-primary">Convert to CIDR</button>
+        <p id="calc-cidr-result" class="muted"></p>
+      </article>
+
+      <article class="card calc-card">
+        <h3>Wildcard Mask</h3>
+        <label for="calc-wildcard-mask">Subnet Mask</label>
+        <input id="calc-wildcard-mask" placeholder="255.255.255.0">
+        <button id="calc-wildcard-btn" class="btn btn-primary">Convert</button>
+        <p id="calc-wildcard-result" class="muted"></p>
+      </article>
+
+      <article class="card calc-card">
+        <h3>IPv4 to Binary</h3>
+        <label for="calc-ipv4-binary-ip">IPv4</label>
+        <input id="calc-ipv4-binary-ip" placeholder="10.10.10.10">
+        <button id="calc-ipv4-binary-btn" class="btn btn-primary">Convert</button>
+        <p id="calc-ipv4-binary-result" class="muted"></p>
+      </article>
+
+      <article class="card calc-card">
+        <h3>Binary to IPv4</h3>
+        <label for="calc-binary-ipv4-bin">Binary (4 octets)</label>
+        <input id="calc-binary-ipv4-bin" placeholder="11000000.10101000.00000001.00000001">
+        <button id="calc-binary-ipv4-btn" class="btn btn-primary">Convert</button>
+        <p id="calc-binary-ipv4-result" class="muted"></p>
+      </article>
+
+      <article class="card calc-card">
+        <h3>Hosts per Subnet</h3>
+        <label for="calc-hosts-cidr">CIDR</label>
+        <input id="calc-hosts-cidr" type="number" value="26" min="0" max="32">
+        <button id="calc-hosts-btn" class="btn btn-primary">Calculate Hosts</button>
+        <p id="calc-hosts-result" class="muted"></p>
+      </article>
+
+      <article class="card calc-card">
+        <h3>Wildcard to Mask</h3>
+        <label for="calc-wildcard-mask-to-subnet">Wildcard Mask</label>
+        <input id="calc-wildcard-mask-to-subnet" placeholder="0.0.0.255">
+        <button id="calc-wildcard-to-mask-btn" class="btn btn-primary">Convert</button>
+        <p id="calc-wildcard-to-mask-result" class="muted"></p>
+      </article>
+
+      <article class="card calc-card">
+        <h3>IPv4 Class Finder</h3>
+        <label for="calc-ip-class-ip">IPv4</label>
+        <input id="calc-ip-class-ip" placeholder="172.16.10.1">
+        <button id="calc-ip-class-btn" class="btn btn-primary">Identify</button>
+        <p id="calc-ip-class-result" class="muted"></p>
+      </article>
+
+      <article class="card calc-card">
+        <h3>Hosts to CIDR</h3>
+        <label for="calc-hosts-to-cidr">Required Hosts</label>
+        <input id="calc-hosts-to-cidr" type="number" value="50" min="1">
+        <button id="calc-hosts-to-cidr-btn" class="btn btn-primary">Calculate</button>
+        <p id="calc-hosts-to-cidr-result" class="muted"></p>
+      </article>
+
+      <article class="card calc-card">
+        <h3>Subnets from CIDR</h3>
+        <label for="calc-subnets-base-cidr">Base CIDR</label>
+        <input id="calc-subnets-base-cidr" type="number" value="24" min="0" max="32">
+        <label for="calc-subnets-count">Required Subnets</label>
+        <input id="calc-subnets-count" type="number" value="4" min="1">
+        <button id="calc-subnets-btn" class="btn btn-primary">Calculate</button>
+        <p id="calc-subnets-result" class="muted"></p>
+      </article>
+
+      <article class="card calc-card">
+        <h3>Block Size</h3>
+        <label for="calc-block-cidr">CIDR</label>
+        <input id="calc-block-cidr" type="number" value="27" min="0" max="32">
+        <button id="calc-block-btn" class="btn btn-primary">Calculate</button>
+        <p id="calc-block-result" class="muted"></p>
+      </article>
+    </section>
+  </main>
+
+  <script src="js/progress.js" defer></script>
+  <script src="js/main.js" defer></script>
+  <script src="js/calculators.js" defer></script>
+</body>
+</html>

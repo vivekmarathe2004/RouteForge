@@ -1,0 +1,121 @@
+﻿[
+  {
+    "id": "ccnp-advanced-ospf",
+    "title": "Advanced OSPF",
+    "level": "CCNP",
+    "summary": "Advanced OSPF covers area design, LSA types, route summarization, and path optimization.",
+    "diagram": "Area 0 backbone with NSSA and totally stubby areas",
+    "example": "Use OSPF summarization at ABRs to reduce LSA flooding and table size.",
+    "cli": [
+      "area 10 stub no-summary",
+      "area 20 nssa",
+      "area 0 range 10.10.0.0 255.255.0.0"
+    ],
+    "troubleshooting": "Review LSA database consistency and ABR placement for suboptimal SPF results.",
+    "recommendedNext": ["BGP Basics", "Route Redistribution"]
+  },
+  {
+    "id": "ccnp-bgp-basics",
+    "title": "BGP Basics",
+    "level": "CCNP",
+    "summary": "BGP is a path-vector protocol that exchanges routes between autonomous systems.",
+    "diagram": "AS65001 <eBGP> AS65002 with iBGP route reflection inside each AS",
+    "example": "Prefer one ISP by manipulating local preference or AS path prepending.",
+    "cli": [
+      "router bgp 65001",
+      "neighbor 203.0.113.2 remote-as 65002",
+      "show ip bgp summary"
+    ],
+    "troubleshooting": "Check peering states, update-source settings, and prefix filtering policies.",
+    "recommendedNext": ["Route Redistribution", "MPLS Fundamentals"]
+  },
+  {
+    "id": "ccnp-route-redistribution",
+    "title": "Route Redistribution",
+    "level": "CCNP",
+    "summary": "Redistribution exchanges routes between different routing protocols with metric translation controls.",
+    "diagram": "OSPF domain <-> EIGRP domain via boundary router",
+    "example": "Use route-maps and tags to avoid loops after two-way redistribution.",
+    "cli": [
+      "router ospf 1",
+      "redistribute bgp 65001 subnets route-map BGP-IN",
+      "show ip route tag"
+    ],
+    "troubleshooting": "Look for route feedback loops and inconsistent metric seed values.",
+    "recommendedNext": ["QoS", "High Availability"]
+  },
+  {
+    "id": "ccnp-mpls-fundamentals",
+    "title": "MPLS Fundamentals",
+    "level": "CCNP",
+    "summary": "MPLS forwards packets using labels and enables scalable VPN services.",
+    "diagram": "CE -> PE -> P -> PE -> CE with label switched paths",
+    "example": "LDP assigns labels while IGP carries loopback reachability.",
+    "cli": [
+      "mpls ip",
+      "show mpls ldp neighbor",
+      "show mpls forwarding-table"
+    ],
+    "troubleshooting": "Validate IGP and LDP adjacency first; no labels means no MPLS forwarding.",
+    "recommendedNext": ["VPN Technologies", "QoS"]
+  },
+  {
+    "id": "ccnp-vpn-technologies",
+    "title": "VPN Technologies",
+    "level": "CCNP",
+    "summary": "VPNs provide private transport over shared infrastructure using encryption or segmentation.",
+    "diagram": "Branch Router -> Internet -> HQ Router (IPsec tunnel)",
+    "example": "Site-to-site IPsec protects branch traffic across public WAN links.",
+    "cli": [
+      "crypto isakmp policy 10",
+      "crypto map VPN-MAP 10 ipsec-isakmp",
+      "show crypto isakmp sa"
+    ],
+    "troubleshooting": "Check Phase 1 policy match, interesting traffic ACL, and NAT traversal settings.",
+    "recommendedNext": ["High Availability", "Network Automation Basics"]
+  },
+  {
+    "id": "ccnp-qos",
+    "title": "QoS",
+    "level": "CCNP",
+    "summary": "QoS prioritizes delay-sensitive traffic using classification, marking, queuing, and shaping.",
+    "diagram": "Class-map -> Policy-map -> Service-policy on WAN interface",
+    "example": "Apply LLQ for voice traffic and shape bulk data to preserve latency.",
+    "cli": [
+      "class-map match-any VOICE",
+      "policy-map WAN-QOS",
+      "show policy-map interface g0/0"
+    ],
+    "troubleshooting": "Verify DSCP marking at edge and ensure policy is attached in the right direction.",
+    "recommendedNext": ["High Availability"]
+  },
+  {
+    "id": "ccnp-high-availability",
+    "title": "High Availability",
+    "level": "CCNP",
+    "summary": "High availability reduces downtime using redundant links, first-hop redundancy, and fast convergence.",
+    "diagram": "Dual core with HSRP/VRRP and ECMP uplinks",
+    "example": "HSRP provides a virtual gateway IP so clients keep a consistent default route.",
+    "cli": [
+      "standby 10 ip 192.168.10.1",
+      "standby 10 priority 110",
+      "show standby brief"
+    ],
+    "troubleshooting": "Check hello timers, interface tracking, and split-brain conditions.",
+    "recommendedNext": ["Network Automation Basics"]
+  },
+  {
+    "id": "ccnp-network-automation-basics",
+    "title": "Network Automation Basics",
+    "level": "CCNP",
+    "summary": "Automation improves consistency through APIs, templates, and version-controlled changes.",
+    "diagram": "Git repo -> CI pipeline -> API call -> Device config",
+    "example": "Use RESTCONF to query interface state and validate post-change health.",
+    "cli": [
+      "show running-config | section interface",
+      "show restconf"
+    ],
+    "troubleshooting": "Ensure API credentials, certificate trust, and idempotent templates.",
+    "recommendedNext": ["BGP Basics", "QoS"]
+  }
+]

@@ -1,0 +1,922 @@
+﻿{
+  "commands": [
+    {
+      "command": "enable",
+      "mode": "user",
+      "level": "CCNA",
+      "category": "Basics",
+      "description": "Enter privileged EXEC mode",
+      "example": "enable",
+      "notes": "Requires enable secret if configured."
+    },
+    {
+      "command": "disable",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "Basics",
+      "description": "Return to user EXEC mode",
+      "example": "disable",
+      "notes": "Use when you are done with privileged commands."
+    },
+    {
+      "command": "configure terminal",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "Basics",
+      "description": "Enter global configuration mode",
+      "example": "configure terminal",
+      "notes": "Global config changes device settings."
+    },
+    {
+      "command": "end",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "Basics",
+      "description": "Exit configuration mode to privileged EXEC",
+      "example": "end",
+      "notes": "Same effect as Ctrl+Z."
+    },
+    {
+      "command": "exit",
+      "mode": "any",
+      "level": "CCNA",
+      "category": "Basics",
+      "description": "Exit one configuration level",
+      "example": "exit",
+      "notes": "Use repeatedly to return to privileged mode."
+    },
+    {
+      "command": "hostname NAME",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "Basics",
+      "description": "Set the device hostname",
+      "example": "hostname Branch-R1",
+      "notes": "Hostname appears in the CLI prompt."
+    },
+    {
+      "command": "show running-config",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "Basics",
+      "description": "Display the active configuration",
+      "example": "show running-config",
+      "notes": "Use to verify current settings."
+    },
+    {
+      "command": "show startup-config",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "Basics",
+      "description": "Display the saved configuration",
+      "example": "show startup-config",
+      "notes": "Shows configuration used after reload."
+    },
+    {
+      "command": "copy running-config startup-config",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "Basics",
+      "description": "Save the running configuration",
+      "example": "copy running-config startup-config",
+      "notes": "Persists changes across reloads."
+    },
+    {
+      "command": "show version",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "Basics",
+      "description": "Display IOS version and hardware details",
+      "example": "show version",
+      "notes": "Check uptime, memory, and image."
+    },
+    {
+      "command": "no ip domain-lookup",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "Basics",
+      "description": "Disable DNS lookup on typos",
+      "example": "no ip domain-lookup",
+      "notes": "Prevents long delays on mistyped commands."
+    },
+    {
+      "command": "enable secret PASSWORD",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "Basics",
+      "description": "Set encrypted enable password",
+      "example": "enable secret Str0ngP@ss",
+      "notes": "Preferred over enable password."
+    },
+    {
+      "command": "service password-encryption",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "Basics",
+      "description": "Encrypt plain-text passwords",
+      "example": "service password-encryption",
+      "notes": "Applies to line and user passwords."
+    },
+    {
+      "command": "interface g0/1",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "Interfaces",
+      "description": "Enter interface configuration mode",
+      "example": "interface g0/1",
+      "notes": "Use correct interface name for your device."
+    },
+    {
+      "command": "interface loopback0",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "Interfaces",
+      "description": "Create or enter a loopback interface",
+      "example": "interface loopback0",
+      "notes": "Loopbacks stay up unless shut down."
+    },
+    {
+      "command": "description TEXT",
+      "mode": "interface",
+      "level": "CCNA",
+      "category": "Interfaces",
+      "description": "Add a description to the interface",
+      "example": "description Uplink to Core",
+      "notes": "Helps document topology."
+    },
+    {
+      "command": "ip address A.B.C.D MASK",
+      "mode": "interface",
+      "level": "CCNA",
+      "category": "Interfaces",
+      "description": "Assign IPv4 address and mask",
+      "example": "ip address 10.10.10.1 255.255.255.0",
+      "notes": "Use correct subnet mask."
+    },
+    {
+      "command": "no shutdown",
+      "mode": "interface",
+      "level": "CCNA",
+      "category": "Interfaces",
+      "description": "Enable the interface",
+      "example": "no shutdown",
+      "notes": "Interface becomes administratively up."
+    },
+    {
+      "command": "shutdown",
+      "mode": "interface",
+      "level": "CCNA",
+      "category": "Interfaces",
+      "description": "Disable the interface",
+      "example": "shutdown",
+      "notes": "Administratively down the port."
+    },
+    {
+      "command": "ip helper-address A.B.C.D",
+      "mode": "interface",
+      "level": "CCNA",
+      "category": "Interfaces",
+      "description": "Configure DHCP relay",
+      "example": "ip helper-address 10.0.0.5",
+      "notes": "Forwards DHCP broadcasts to server."
+    },
+    {
+      "command": "show ip interface brief",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "Interfaces",
+      "description": "Summarize interfaces and IPs",
+      "example": "show ip interface brief",
+      "notes": "Check Status/Protocol for up/up."
+    },
+    {
+      "command": "show interfaces status",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "Interfaces",
+      "description": "Switchport status summary",
+      "example": "show interfaces status",
+      "notes": "Useful on switches for port state."
+    },
+    {
+      "command": "show interfaces",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "Interfaces",
+      "description": "Detailed interface counters",
+      "example": "show interfaces g0/1",
+      "notes": "Check errors, speed, duplex."
+    },
+    {
+      "command": "vlan 10",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "Switching",
+      "description": "Create or enter VLAN",
+      "example": "vlan 10",
+      "notes": "VLAN is created in VLAN database."
+    },
+    {
+      "command": "name USERS",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "Switching",
+      "description": "Name a VLAN",
+      "example": "name USERS",
+      "notes": "Use inside VLAN configuration mode."
+    },
+    {
+      "command": "switchport mode access",
+      "mode": "interface",
+      "level": "CCNA",
+      "category": "Switching",
+      "description": "Set access port mode",
+      "example": "switchport mode access",
+      "notes": "Use for end-host ports."
+    },
+    {
+      "command": "switchport access vlan 10",
+      "mode": "interface",
+      "level": "CCNA",
+      "category": "Switching",
+      "description": "Assign access VLAN",
+      "example": "switchport access vlan 10",
+      "notes": "Port must be in access mode."
+    },
+    {
+      "command": "switchport mode trunk",
+      "mode": "interface",
+      "level": "CCNA",
+      "category": "Switching",
+      "description": "Set trunk port mode",
+      "example": "switchport mode trunk",
+      "notes": "Use between switches/routers."
+    },
+    {
+      "command": "switchport trunk allowed vlan 10,20",
+      "mode": "interface",
+      "level": "CCNA",
+      "category": "Switching",
+      "description": "Restrict VLANs on trunk",
+      "example": "switchport trunk allowed vlan 10,20",
+      "notes": "Limit broadcast across trunk."
+    },
+    {
+      "command": "show vlan brief",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "Switching",
+      "description": "Display VLANs and port membership",
+      "example": "show vlan brief",
+      "notes": "Verify access VLAN assignment."
+    },
+    {
+      "command": "show interfaces trunk",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "Switching",
+      "description": "Show trunk status and VLANs",
+      "example": "show interfaces trunk",
+      "notes": "Check allowed and native VLANs."
+    },
+    {
+      "command": "show mac address-table",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "Switching",
+      "description": "Display MAC table",
+      "example": "show mac address-table",
+      "notes": "Use to trace host locations."
+    },
+    {
+      "command": "spanning-tree mode rapid-pvst",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "STP",
+      "description": "Enable Rapid PVST+",
+      "example": "spanning-tree mode rapid-pvst",
+      "notes": "Provides faster convergence than PVST+."
+    },
+    {
+      "command": "spanning-tree vlan 10 priority 4096",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "STP",
+      "description": "Set root bridge priority",
+      "example": "spanning-tree vlan 10 priority 4096",
+      "notes": "Lower value wins root election."
+    },
+    {
+      "command": "spanning-tree portfast",
+      "mode": "interface",
+      "level": "CCNA",
+      "category": "STP",
+      "description": "Enable PortFast on access port",
+      "example": "spanning-tree portfast",
+      "notes": "Avoid on trunk ports."
+    },
+    {
+      "command": "show spanning-tree",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "STP",
+      "description": "Display STP status",
+      "example": "show spanning-tree",
+      "notes": "Check root bridge and port roles."
+    },
+    {
+      "command": "channel-group 1 mode active",
+      "mode": "interface",
+      "level": "CCNA",
+      "category": "EtherChannel",
+      "description": "Create LACP EtherChannel",
+      "example": "channel-group 1 mode active",
+      "notes": "Apply on all member ports."
+    },
+    {
+      "command": "interface port-channel 1",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "EtherChannel",
+      "description": "Configure port-channel interface",
+      "example": "interface port-channel 1",
+      "notes": "Configure L2/L3 settings here."
+    },
+    {
+      "command": "show etherchannel summary",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "EtherChannel",
+      "description": "View EtherChannel status",
+      "example": "show etherchannel summary",
+      "notes": "Flags show active/standby members."
+    },
+    {
+      "command": "ip route 0.0.0.0 0.0.0.0 NEXT-HOP",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "Routing",
+      "description": "Configure a default static route",
+      "example": "ip route 0.0.0.0 0.0.0.0 10.0.0.1",
+      "notes": "Sends unknown traffic to gateway."
+    },
+    {
+      "command": "show ip route",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "Routing",
+      "description": "Display routing table",
+      "example": "show ip route",
+      "notes": "Check route source and metrics."
+    },
+    {
+      "command": "show ip protocols",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "Routing",
+      "description": "Show routing protocol settings",
+      "example": "show ip protocols",
+      "notes": "Lists timers and networks."
+    },
+    {
+      "command": "ping A.B.C.D",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "Routing",
+      "description": "Test reachability",
+      "example": "ping 8.8.8.8",
+      "notes": "Use extended ping for source."
+    },
+    {
+      "command": "traceroute A.B.C.D",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "Routing",
+      "description": "Trace path to destination",
+      "example": "traceroute 8.8.8.8",
+      "notes": "Useful for routing loop detection."
+    },
+    {
+      "command": "show cdp neighbors",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "Routing",
+      "description": "Show Cisco neighbor discovery",
+      "example": "show cdp neighbors",
+      "notes": "Layer 2 neighbor visibility."
+    },
+    {
+      "command": "router ospf 1",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "OSPF",
+      "description": "Start OSPF process",
+      "example": "router ospf 1",
+      "notes": "Process ID is locally significant."
+    },
+    {
+      "command": "network A.B.C.D WILDCARD area 0",
+      "mode": "router",
+      "level": "CCNA",
+      "category": "OSPF",
+      "description": "Advertise network into OSPF",
+      "example": "network 10.0.0.0 0.0.0.255 area 0",
+      "notes": "Wildcard is inverse mask."
+    },
+    {
+      "command": "passive-interface g0/1",
+      "mode": "router",
+      "level": "CCNA",
+      "category": "OSPF",
+      "description": "Disable OSPF adjacency on interface",
+      "example": "passive-interface g0/1",
+      "notes": "Still advertises the network."
+    },
+    {
+      "command": "default-information originate",
+      "mode": "router",
+      "level": "CCNA",
+      "category": "OSPF",
+      "description": "Inject default route into OSPF",
+      "example": "default-information originate",
+      "notes": "Requires default route in table."
+    },
+    {
+      "command": "ip ospf 1 area 0",
+      "mode": "interface",
+      "level": "CCNA",
+      "category": "OSPF",
+      "description": "Enable OSPF on interface",
+      "example": "ip ospf 1 area 0",
+      "notes": "Alternative to network statement."
+    },
+    {
+      "command": "show ip ospf neighbor",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "OSPF",
+      "description": "Show OSPF adjacencies",
+      "example": "show ip ospf neighbor",
+      "notes": "Check state FULL."
+    },
+    {
+      "command": "show ip ospf interface brief",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "OSPF",
+      "description": "Summarize OSPF interfaces",
+      "example": "show ip ospf interface brief",
+      "notes": "Verify area and hello/dead."
+    },
+    {
+      "command": "router eigrp 100",
+      "mode": "config",
+      "level": "CCNP",
+      "category": "EIGRP",
+      "description": "Start EIGRP process",
+      "example": "router eigrp 100",
+      "notes": "AS number identifies process."
+    },
+    {
+      "command": "network A.B.C.D",
+      "mode": "router",
+      "level": "CCNP",
+      "category": "EIGRP",
+      "description": "Advertise network in EIGRP",
+      "example": "network 10.0.0.0",
+      "notes": "Classful behavior unless wildcard added."
+    },
+    {
+      "command": "no auto-summary",
+      "mode": "router",
+      "level": "CCNP",
+      "category": "EIGRP",
+      "description": "Disable classful auto-summary",
+      "example": "no auto-summary",
+      "notes": "Recommended for modern networks."
+    },
+    {
+      "command": "show ip eigrp neighbors",
+      "mode": "privileged",
+      "level": "CCNP",
+      "category": "EIGRP",
+      "description": "Display EIGRP neighbors",
+      "example": "show ip eigrp neighbors",
+      "notes": "Verify adjacency and uptime."
+    },
+    {
+      "command": "router rip",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "RIP",
+      "description": "Start RIP process",
+      "example": "router rip",
+      "notes": "RIP v2 is preferred."
+    },
+    {
+      "command": "version 2",
+      "mode": "router",
+      "level": "CCNA",
+      "category": "RIP",
+      "description": "Enable RIP version 2",
+      "example": "version 2",
+      "notes": "Supports classless routing."
+    },
+    {
+      "command": "router bgp 65001",
+      "mode": "config",
+      "level": "CCNP",
+      "category": "BGP",
+      "description": "Start BGP process",
+      "example": "router bgp 65001",
+      "notes": "AS number identifies BGP domain."
+    },
+    {
+      "command": "neighbor 203.0.113.2 remote-as 65002",
+      "mode": "router",
+      "level": "CCNP",
+      "category": "BGP",
+      "description": "Configure BGP neighbor",
+      "example": "neighbor 203.0.113.2 remote-as 65002",
+      "notes": "Required for eBGP/iBGP peering."
+    },
+    {
+      "command": "network 10.10.0.0 mask 255.255.0.0",
+      "mode": "router",
+      "level": "CCNP",
+      "category": "BGP",
+      "description": "Advertise prefix in BGP",
+      "example": "network 10.10.0.0 mask 255.255.0.0",
+      "notes": "Prefix must exist in routing table."
+    },
+    {
+      "command": "show ip bgp summary",
+      "mode": "privileged",
+      "level": "CCNP",
+      "category": "BGP",
+      "description": "Show BGP neighbor status",
+      "example": "show ip bgp summary",
+      "notes": "Look for Established state."
+    },
+    {
+      "command": "show ip bgp",
+      "mode": "privileged",
+      "level": "CCNP",
+      "category": "BGP",
+      "description": "Display BGP table",
+      "example": "show ip bgp",
+      "notes": "Best path marked with >."
+    },
+    {
+      "command": "access-list 1 permit 10.0.0.0 0.0.0.255",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "ACL",
+      "description": "Create standard ACL entry",
+      "example": "access-list 1 permit 10.0.0.0 0.0.0.255",
+      "notes": "Standard ACLs match source only."
+    },
+    {
+      "command": "access-list 101 permit tcp 10.0.0.0 0.0.0.255 host 192.168.1.10 eq 80",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "ACL",
+      "description": "Create extended ACL entry",
+      "example": "access-list 101 permit tcp 10.0.0.0 0.0.0.255 host 192.168.1.10 eq 80",
+      "notes": "Extended ACLs match L3/L4."
+    },
+    {
+      "command": "ip access-list extended WEB_ONLY",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "ACL",
+      "description": "Create named extended ACL",
+      "example": "ip access-list extended WEB_ONLY",
+      "notes": "Use permit/deny statements inside."
+    },
+    {
+      "command": "ip access-group WEB_ONLY in",
+      "mode": "interface",
+      "level": "CCNA",
+      "category": "ACL",
+      "description": "Apply ACL to interface",
+      "example": "ip access-group WEB_ONLY in",
+      "notes": "Choose inbound or outbound."
+    },
+    {
+      "command": "show access-lists",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "ACL",
+      "description": "Display configured ACLs",
+      "example": "show access-lists",
+      "notes": "Check hit counters."
+    },
+    {
+      "command": "line vty 0 4",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "Security",
+      "description": "Configure VTY lines",
+      "example": "line vty 0 4",
+      "notes": "Used for remote access settings."
+    },
+    {
+      "command": "login local",
+      "mode": "line",
+      "level": "CCNA",
+      "category": "Security",
+      "description": "Use local user database for login",
+      "example": "login local",
+      "notes": "Requires username configured."
+    },
+    {
+      "command": "transport input ssh",
+      "mode": "line",
+      "level": "CCNA",
+      "category": "Security",
+      "description": "Allow only SSH on VTY",
+      "example": "transport input ssh",
+      "notes": "Disable telnet for security."
+    },
+    {
+      "command": "username admin secret PASSWORD",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "Security",
+      "description": "Create local user with secret",
+      "example": "username admin secret Str0ngP@ss",
+      "notes": "Used by login local."
+    },
+    {
+      "command": "ip ssh version 2",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "Security",
+      "description": "Force SSH version 2",
+      "example": "ip ssh version 2",
+      "notes": "SSH v1 is insecure."
+    },
+    {
+      "command": "ip nat inside",
+      "mode": "interface",
+      "level": "CCNA",
+      "category": "NAT",
+      "description": "Mark inside NAT interface",
+      "example": "ip nat inside",
+      "notes": "Apply on LAN-facing interfaces."
+    },
+    {
+      "command": "ip nat outside",
+      "mode": "interface",
+      "level": "CCNA",
+      "category": "NAT",
+      "description": "Mark outside NAT interface",
+      "example": "ip nat outside",
+      "notes": "Apply on WAN-facing interfaces."
+    },
+    {
+      "command": "ip nat inside source list 1 interface g0/0 overload",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "NAT",
+      "description": "Configure PAT overload",
+      "example": "ip nat inside source list 1 interface g0/0 overload",
+      "notes": "Many inside hosts share one IP."
+    },
+    {
+      "command": "show ip nat translations",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "NAT",
+      "description": "View NAT translation table",
+      "example": "show ip nat translations",
+      "notes": "Check inside/outside addresses."
+    },
+    {
+      "command": "ip dhcp excluded-address 192.168.1.1 192.168.1.20",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "DHCP",
+      "description": "Exclude addresses from DHCP pool",
+      "example": "ip dhcp excluded-address 192.168.1.1 192.168.1.20",
+      "notes": "Reserve for static hosts."
+    },
+    {
+      "command": "ip dhcp pool USERS",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "DHCP",
+      "description": "Create DHCP pool",
+      "example": "ip dhcp pool USERS",
+      "notes": "Enter pool configuration mode."
+    },
+    {
+      "command": "network 192.168.1.0 255.255.255.0",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "DHCP",
+      "description": "Define DHCP pool network",
+      "example": "network 192.168.1.0 255.255.255.0",
+      "notes": "Use inside DHCP pool mode."
+    },
+    {
+      "command": "default-router 192.168.1.1",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "DHCP",
+      "description": "Set default gateway for DHCP clients",
+      "example": "default-router 192.168.1.1",
+      "notes": "Use inside DHCP pool mode."
+    },
+    {
+      "command": "show ip dhcp binding",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "DHCP",
+      "description": "Show active DHCP leases",
+      "example": "show ip dhcp binding",
+      "notes": "Verify client assignments."
+    },
+    {
+      "command": "ip name-server 8.8.8.8",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "DNS",
+      "description": "Configure DNS resolver",
+      "example": "ip name-server 8.8.8.8",
+      "notes": "Used for name resolution on device."
+    },
+    {
+      "command": "ipv6 unicast-routing",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "IPv6",
+      "description": "Enable IPv6 routing",
+      "example": "ipv6 unicast-routing",
+      "notes": "Required to route IPv6 packets."
+    },
+    {
+      "command": "ipv6 address 2001:db8::1/64",
+      "mode": "interface",
+      "level": "CCNA",
+      "category": "IPv6",
+      "description": "Assign global IPv6 address",
+      "example": "ipv6 address 2001:db8::1/64",
+      "notes": "Use valid IPv6 prefix."
+    },
+    {
+      "command": "ipv6 route ::/0 2001:db8::1",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "IPv6",
+      "description": "Configure IPv6 default route",
+      "example": "ipv6 route ::/0 2001:db8::1",
+      "notes": "Next-hop must be reachable."
+    },
+    {
+      "command": "show ipv6 interface brief",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "IPv6",
+      "description": "Summarize IPv6 interfaces",
+      "example": "show ipv6 interface brief",
+      "notes": "Check link-local/global addresses."
+    },
+    {
+      "command": "standby 10 ip 192.168.1.1",
+      "mode": "interface",
+      "level": "CCNP",
+      "category": "High Availability",
+      "description": "Configure HSRP virtual IP",
+      "example": "standby 10 ip 192.168.1.1",
+      "notes": "Clients use this gateway IP."
+    },
+    {
+      "command": "show standby brief",
+      "mode": "privileged",
+      "level": "CCNP",
+      "category": "High Availability",
+      "description": "Show HSRP status",
+      "example": "show standby brief",
+      "notes": "Verify active/standby roles."
+    },
+    {
+      "command": "class-map match-any VOICE",
+      "mode": "config",
+      "level": "CCNP",
+      "category": "QoS",
+      "description": "Create a QoS class map",
+      "example": "class-map match-any VOICE",
+      "notes": "Define traffic to match."
+    },
+    {
+      "command": "policy-map WAN-QOS",
+      "mode": "config",
+      "level": "CCNP",
+      "category": "QoS",
+      "description": "Create a QoS policy map",
+      "example": "policy-map WAN-QOS",
+      "notes": "Attach classes and actions."
+    },
+    {
+      "command": "service-policy output WAN-QOS",
+      "mode": "interface",
+      "level": "CCNP",
+      "category": "QoS",
+      "description": "Apply QoS policy to interface",
+      "example": "service-policy output WAN-QOS",
+      "notes": "Direction matters: input vs output."
+    },
+    {
+      "command": "mpls ip",
+      "mode": "interface",
+      "level": "CCNP",
+      "category": "MPLS",
+      "description": "Enable MPLS on interface",
+      "example": "mpls ip",
+      "notes": "Requires IGP and LDP."
+    },
+    {
+      "command": "show mpls forwarding-table",
+      "mode": "privileged",
+      "level": "CCNP",
+      "category": "MPLS",
+      "description": "Show MPLS forwarding entries",
+      "example": "show mpls forwarding-table",
+      "notes": "Check label swap/pop actions."
+    },
+    {
+      "command": "crypto isakmp policy 10",
+      "mode": "config",
+      "level": "CCNP",
+      "category": "VPN",
+      "description": "Create ISAKMP policy",
+      "example": "crypto isakmp policy 10",
+      "notes": "Phase 1 policy for IPsec."
+    },
+    {
+      "command": "crypto map VPN-MAP 10 ipsec-isakmp",
+      "mode": "config",
+      "level": "CCNP",
+      "category": "VPN",
+      "description": "Create crypto map entry",
+      "example": "crypto map VPN-MAP 10 ipsec-isakmp",
+      "notes": "Bind to transform set and peer."
+    },
+    {
+      "command": "crypto map VPN-MAP",
+      "mode": "interface",
+      "level": "CCNP",
+      "category": "VPN",
+      "description": "Apply crypto map to interface",
+      "example": "crypto map VPN-MAP",
+      "notes": "Apply on WAN interface."
+    },
+    {
+      "command": "show crypto isakmp sa",
+      "mode": "privileged",
+      "level": "CCNP",
+      "category": "VPN",
+      "description": "Show ISAKMP security associations",
+      "example": "show crypto isakmp sa",
+      "notes": "Verify Phase 1 state."
+    },
+    {
+      "command": "logging host 10.10.10.10",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "Management",
+      "description": "Send syslog to server",
+      "example": "logging host 10.10.10.10",
+      "notes": "Use with logging trap level."
+    },
+    {
+      "command": "show logging",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "Management",
+      "description": "Display system logs",
+      "example": "show logging",
+      "notes": "Check for errors and events."
+    },
+    {
+      "command": "ntp server 10.10.10.1",
+      "mode": "config",
+      "level": "CCNA",
+      "category": "Management",
+      "description": "Configure NTP server",
+      "example": "ntp server 10.10.10.1",
+      "notes": "Synchronizes device clock."
+    },
+    {
+      "command": "show ntp status",
+      "mode": "privileged",
+      "level": "CCNA",
+      "category": "Management",
+      "description": "Check NTP synchronization",
+      "example": "show ntp status",
+      "notes": "Look for synchronized state."
+    }
+  ]
+}

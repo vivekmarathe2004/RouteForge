@@ -1,0 +1,19 @@
+﻿{
+  "name": "network-lab-platform",
+  "version": "1.0.0",
+  "description": "CCNA/CCNP training platform with quizzes, subnet trainer, CLI simulator, and labs",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node server/server.js",
+    "generate:practice": "node scripts/generate-practice-data.js",
+    "validate:practice": "node scripts/validate-practice-data.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "serverless-http": "^3.2.0"
+  }
+}

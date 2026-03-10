@@ -1,0 +1,211 @@
+﻿[
+  {
+    "id": "ccna-osi-model",
+    "title": "OSI Model",
+    "level": "CCNA",
+    "summary": "The OSI model divides network communication into 7 layers so engineers can isolate and troubleshoot issues quickly.",
+    "diagram": "L7 Application -> L6 Presentation -> L5 Session -> L4 Transport -> L3 Network -> L2 Data Link -> L1 Physical",
+    "example": "If a web page does not load, check DNS and HTTP (L7), TCP handshake (L4), and IP reachability (L3).",
+    "cli": [
+      "show interfaces status",
+      "show ip interface brief",
+      "ping 8.8.8.8"
+    ],
+    "troubleshooting": "Start from L1 and move upward: cable/link lights, interface status, VLAN assignment, IP addressing, routing, then application service status.",
+    "recommendedNext": ["TCP/IP", "IPv4 Addressing"]
+  },
+  {
+    "id": "ccna-tcp-ip",
+    "title": "TCP/IP",
+    "level": "CCNA",
+    "summary": "TCP/IP is the practical networking model used on real networks, combining multiple OSI layers.",
+    "diagram": "Application | Transport (TCP/UDP) | Internet (IP) | Network Access",
+    "example": "A TCP session to port 443 uses a 3-way handshake and reliable delivery.",
+    "cli": [
+      "show tcp brief all",
+      "show ip protocols"
+    ],
+    "troubleshooting": "Verify transport port and protocol, then verify IP path and MTU if packets are fragmented.",
+    "recommendedNext": ["Subnetting", "Routing Fundamentals"]
+  },
+  {
+    "id": "ccna-ipv4-addressing",
+    "title": "IPv4 Addressing",
+    "level": "CCNA",
+    "summary": "IPv4 uses 32-bit addresses with network and host portions defined by subnet mask.",
+    "diagram": "IP: 192.168.10.25 /24 -> Network: 192.168.10.0, Host: .25",
+    "example": "A /24 mask gives 256 addresses, 254 usable host addresses.",
+    "cli": [
+      "show ip interface brief",
+      "show running-config interface g0/1"
+    ],
+    "troubleshooting": "Check duplicate IPs, wrong subnet masks, and default gateway mismatch.",
+    "recommendedNext": ["Subnetting", "DHCP"]
+  },
+  {
+    "id": "ccna-subnetting",
+    "title": "Subnetting",
+    "level": "CCNA",
+    "summary": "Subnetting creates smaller networks for efficient addressing and broadcast control.",
+    "diagram": "10.10.0.0/16 split into /24 subnets -> 10.10.1.0/24, 10.10.2.0/24, ...",
+    "example": "192.168.1.0/26 creates 4 subnets, each with 62 usable hosts.",
+    "cli": [
+      "show ip route",
+      "show ip interface"
+    ],
+    "troubleshooting": "Confirm network and broadcast addresses are not assigned to hosts and masks match across peers.",
+    "recommendedNext": ["VLAN", "Routing Fundamentals"]
+  },
+  {
+    "id": "ccna-vlan",
+    "title": "VLAN",
+    "level": "CCNA",
+    "summary": "VLANs segment Layer 2 domains and reduce broadcast scope.",
+    "diagram": "Switch: VLAN10 (Users), VLAN20 (Voice), VLAN99 (Management)",
+    "example": "PCs on same switch but different VLANs need Layer 3 routing to communicate.",
+    "cli": [
+      "vlan 10",
+      "interface g0/1",
+      "switchport mode access",
+      "switchport access vlan 10",
+      "show vlan brief"
+    ],
+    "troubleshooting": "Check access VLAN assignment, trunk allowed VLAN list, and native VLAN consistency.",
+    "recommendedNext": ["STP", "Routing Fundamentals"]
+  },
+  {
+    "id": "ccna-stp",
+    "title": "STP",
+    "level": "CCNA",
+    "summary": "Spanning Tree Protocol prevents Layer 2 loops by blocking redundant paths.",
+    "diagram": "Root bridge elected -> Root ports + designated ports forwarding, non-designated blocked",
+    "example": "Adjust bridge priority so core switch becomes root for deterministic traffic flow.",
+    "cli": [
+      "show spanning-tree",
+      "spanning-tree vlan 10 priority 4096"
+    ],
+    "troubleshooting": "Watch for topology changes, unexpected root bridge, and portfast misuse causing loops.",
+    "recommendedNext": ["VLAN", "Network Security Basics"]
+  },
+  {
+    "id": "ccna-routing-fundamentals",
+    "title": "Routing Fundamentals",
+    "level": "CCNA",
+    "summary": "Routers forward packets between networks using longest prefix match and routing tables.",
+    "diagram": "LAN A -> R1 -> WAN -> R2 -> LAN B",
+    "example": "A static route 0.0.0.0/0 sends unknown traffic to an upstream gateway.",
+    "cli": [
+      "ip route 0.0.0.0 0.0.0.0 10.0.0.1",
+      "show ip route"
+    ],
+    "troubleshooting": "Verify next-hop reachability and check route administrative distance conflicts.",
+    "recommendedNext": ["OSPF", "NAT"]
+  },
+  {
+    "id": "ccna-ospf",
+    "title": "OSPF",
+    "level": "CCNA",
+    "summary": "OSPF is a link-state protocol that uses areas and SPF to build optimal paths.",
+    "diagram": "Area 0 backbone with ABR connecting Area 10",
+    "example": "Two routers form adjacency when hello/dead timers and network type match.",
+    "cli": [
+      "router ospf 1",
+      "network 10.0.0.0 0.0.0.255 area 0",
+      "show ip ospf neighbor"
+    ],
+    "troubleshooting": "Check area mismatch, passive interfaces, and MTU mismatch for stuck EXSTART/EXCHANGE states.",
+    "recommendedNext": ["ACL", "CCNP Advanced OSPF"]
+  },
+  {
+    "id": "ccna-acl",
+    "title": "ACL",
+    "level": "CCNA",
+    "summary": "Access Control Lists filter traffic based on source, destination, protocol, and ports.",
+    "diagram": "Inbound ACL on WAN interface blocks unauthorized traffic before entering LAN",
+    "example": "Permit 10.10.10.0/24 to web server, deny other sources.",
+    "cli": [
+      "ip access-list extended WEB_ONLY",
+      "permit tcp 10.10.10.0 0.0.0.255 host 172.16.1.10 eq 80",
+      "deny ip any any",
+      "interface g0/0",
+      "ip access-group WEB_ONLY in"
+    ],
+    "troubleshooting": "ACLs are processed top-down; verify order and implicit deny at bottom.",
+    "recommendedNext": ["NAT", "Network Security Basics"]
+  },
+  {
+    "id": "ccna-nat",
+    "title": "NAT",
+    "level": "CCNA",
+    "summary": "NAT translates private IP addresses to public addresses for internet access.",
+    "diagram": "Inside local 192.168.1.10 -> Inside global 203.0.113.10",
+    "example": "PAT allows many internal hosts to share one public IP using unique ports.",
+    "cli": [
+      "ip nat inside source list 1 interface g0/0 overload",
+      "show ip nat translations"
+    ],
+    "troubleshooting": "Ensure interfaces are marked inside/outside and ACL includes correct internal networks.",
+    "recommendedNext": ["DHCP", "DNS"]
+  },
+  {
+    "id": "ccna-dhcp",
+    "title": "DHCP",
+    "level": "CCNA",
+    "summary": "DHCP automates IP assignment with leases and options.",
+    "diagram": "DORA: Discover, Offer, Request, Ack",
+    "example": "A branch router can serve as local DHCP server for clients.",
+    "cli": [
+      "ip dhcp pool USERS",
+      "network 192.168.50.0 255.255.255.0",
+      "default-router 192.168.50.1",
+      "dns-server 8.8.8.8",
+      "show ip dhcp binding"
+    ],
+    "troubleshooting": "Check excluded-address range, helper-address on relay interface, and pool network mask.",
+    "recommendedNext": ["DNS", "Wireless Networking"]
+  },
+  {
+    "id": "ccna-dns",
+    "title": "DNS",
+    "level": "CCNA",
+    "summary": "DNS resolves hostnames to IP addresses using hierarchical records and caching.",
+    "diagram": "Client -> Recursive resolver -> Authoritative server",
+    "example": "nslookup confirms whether resolution fails at client or DNS server.",
+    "cli": [
+      "ip name-server 8.8.8.8",
+      "ping example.com"
+    ],
+    "troubleshooting": "Validate server reachability, correct records, and TTL cache behavior.",
+    "recommendedNext": ["Network Security Basics"]
+  },
+  {
+    "id": "ccna-wireless-networking",
+    "title": "Wireless Networking",
+    "level": "CCNA",
+    "summary": "Wireless networks use SSIDs, channels, and security policies to deliver mobility.",
+    "diagram": "Client -> Access Point -> WLC -> Distribution switch",
+    "example": "Use non-overlapping channels 1, 6, 11 in 2.4 GHz to reduce co-channel interference.",
+    "cli": [
+      "show controllers dot11Radio",
+      "show wlan summary"
+    ],
+    "troubleshooting": "Check RF interference, authentication failures, and weak signal at edge coverage zones.",
+    "recommendedNext": ["Network Security Basics"]
+  },
+  {
+    "id": "ccna-network-security-basics",
+    "title": "Network Security Basics",
+    "level": "CCNA",
+    "summary": "Baseline security includes segmentation, least privilege, secure management, and monitoring.",
+    "diagram": "Mgmt VLAN + ACL + AAA + logging",
+    "example": "Disable unused switch ports and place them in an unused VLAN.",
+    "cli": [
+      "service password-encryption",
+      "ip ssh version 2",
+      "login local",
+      "enable secret C1sc0!"
+    ],
+    "troubleshooting": "Audit open management services and verify AAA fallback to prevent lockouts.",
+    "recommendedNext": ["CCNP VPN Technologies", "CCNP Network Automation Basics"]
+  }
+]

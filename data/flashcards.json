@@ -1,0 +1,18 @@
+﻿[
+  { "id": "f1", "category": "Ports", "front": "TCP 22", "back": "SSH secure remote shell" },
+  { "id": "f2", "category": "Ports", "front": "TCP 23", "back": "Telnet (insecure legacy remote access)" },
+  { "id": "f3", "category": "Ports", "front": "UDP 53", "back": "DNS queries" },
+  { "id": "f4", "category": "Ports", "front": "TCP 80", "back": "HTTP" },
+  { "id": "f5", "category": "Ports", "front": "TCP 443", "back": "HTTPS" },
+  { "id": "f6", "category": "Protocols", "front": "OSPF", "back": "Link-state IGP using SPF algorithm" },
+  { "id": "f7", "category": "Protocols", "front": "BGP", "back": "Path-vector routing between autonomous systems" },
+  { "id": "f8", "category": "Protocols", "front": "STP", "back": "Prevents Layer 2 switching loops" },
+  { "id": "f9", "category": "OSI", "front": "Layer 1", "back": "Physical - bits, media, electrical signaling" },
+  { "id": "f10", "category": "OSI", "front": "Layer 2", "back": "Data Link - MAC, frames, switching" },
+  { "id": "f11", "category": "OSI", "front": "Layer 3", "back": "Network - IP addressing and routing" },
+  { "id": "f12", "category": "Cisco Commands", "front": "show ip interface brief", "back": "Quick interface IP and status view" },
+  { "id": "f13", "category": "Cisco Commands", "front": "show running-config", "back": "Displays active configuration" },
+  { "id": "f14", "category": "Cisco Commands", "front": "show ip route", "back": "Displays routing table" },
+  { "id": "f15", "category": "Terms", "front": "CIDR", "back": "Classless Inter-Domain Routing prefix notation like /24" },
+  { "id": "f16", "category": "Terms", "front": "Wildcard Mask", "back": "Inverse of subnet mask used in ACL and OSPF network statements" }
+]

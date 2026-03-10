@@ -1,0 +1,65 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Networking Flashcards</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="flashcards">
+  <header class="topbar">
+    <nav class="nav">
+      <a class="brand" href="index.html">RouteForge NetLab</a>
+      <div class="nav-links">
+        <a href="index.html">Dashboard</a>
+        <a href="learn.html">Learn</a>
+        <a href="quizzes.html">Quizzes</a>
+        <a href="subnet-trainer.html">Subnet</a>
+        <a href="calculators.html">Calculators</a>
+        <a href="labs.html">Labs</a>
+        <a class="active" href="flashcards.html">Flashcards</a>
+        <a href="cli-simulator.html">CLI</a>
+        <a href="topology-builder.html">Topology</a>
+        <a href="cheat-sheets.html">Cheat Sheets</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>Networking Flashcards</h1>
+      <p>Ports, protocols, OSI, Cisco commands, and key terms with flip animation and random mode.</p>
+      <div class="toolbar">
+        <div>
+          <label for="flashcard-category">Category</label>
+          <select id="flashcard-category"></select>
+        </div>
+        <button id="flashcard-shuffle">Shuffle</button>
+        <button id="flashcard-random">Random: OFF</button>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:14px; display:grid; place-items:center; gap:10px;">
+      <div id="flashcard-count" class="muted">0/0</div>
+      <div class="flashcard-wrap">
+        <div id="flashcard" class="flashcard">
+          <div class="flashcard-face">
+            <h2 id="flashcard-front">Loading...</h2>
+          </div>
+          <div class="flashcard-face flashcard-back">
+            <p id="flashcard-back">...</p>
+          </div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button id="flashcard-prev">Previous</button>
+        <button id="flashcard-next" class="btn btn-primary">Next</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/progress.js" defer></script>
+  <script src="js/main.js" defer></script>
+  <script src="js/flashcards.js" defer></script>
+</body>
+</html>

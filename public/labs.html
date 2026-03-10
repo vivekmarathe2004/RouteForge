@@ -1,0 +1,153 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lab Scenarios</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="labs">
+  <header class="topbar">
+    <nav class="nav">
+      <a class="brand" href="index.html">RouteForge NetLab</a>
+      <div class="nav-links">
+        <a href="index.html">Dashboard</a>
+        <a href="learn.html">Learn</a>
+        <a href="quizzes.html">Quizzes</a>
+        <a href="subnet-trainer.html">Subnet</a>
+        <a href="calculators.html">Calculators</a>
+        <a class="active" href="labs.html">Labs</a>
+        <a href="flashcards.html">Flashcards</a>
+        <a href="cli-simulator.html">CLI</a>
+        <a href="topology-builder.html">Topology</a>
+        <a href="cheat-sheets.html">Cheat Sheets</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>Hands-on Lab Scenarios</h1>
+      <p>Practice VLAN, trunking, routing, OSPF, ACL, NAT, and DHCP with structured step-by-step tasks.</p>
+    </section>
+
+    <section class="card" style="margin-top:14px;">
+      <h3>Find and Track Labs</h3>
+      <div class="toolbar">
+        <input id="lab-search" placeholder="Search by lab title, scenario, or topology">
+        <select id="lab-difficulty-filter" style="max-width:240px;">
+          <option value="all">All difficulty levels</option>
+        </select>
+        <select id="lab-category-filter" style="max-width:220px;">
+          <option value="all">All categories</option>
+        </select>
+        <select id="lab-status-filter" style="max-width:220px;">
+          <option value="all">All completion states</option>
+          <option value="completed">Completed only</option>
+          <option value="incomplete">Incomplete only</option>
+        </select>
+        <select id="lab-sort" style="max-width:200px;">
+          <option value="recommended">Recommended</option>
+          <option value="difficulty">By difficulty</option>
+          <option value="title">By title</option>
+        </select>
+      </div>
+      <div class="toolbar" style="margin-top:8px; align-items:center;">
+        <span class="muted">Filter tags:</span>
+        <div id="lab-tag-filters" class="chip-row"></div>
+        <button id="lab-clear-tags">Clear tags</button>
+      </div>
+      <div class="toolbar" style="margin-top:8px;">
+        <button id="lab-reset-steps">Reset Local Step Progress</button>
+      </div>
+      <div class="toolbar" style="margin-top:8px; align-items:flex-end;">
+        <div style="min-width:180px;">
+          <label for="lab-page-size">Labs per page</label>
+          <select id="lab-page-size" style="max-width:180px;">
+            <option value="30">30</option>
+            <option value="60" selected>60</option>
+            <option value="90">90</option>
+            <option value="120">120</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:8px; align-items:flex-end;">
+          <button id="lab-page-prev">Prev</button>
+          <button id="lab-page-next">Next</button>
+          <span id="lab-page-info" class="muted"></span>
+        </div>
+      </div>
+      <div class="stat-inline">
+        <span>Total Labs: <strong id="lab-total-count">0</strong></span>
+        <span>Completed: <strong id="lab-completed-count">0</strong></span>
+        <span>In Progress: <strong id="lab-inprogress-count">0</strong></span>
+        <span>Completion: <strong id="lab-completion-rate">0%</strong></span>
+      </div>
+      <div id="lab-feedback" style="margin-top:10px;"></div>
+    </section>
+
+    <section class="card" style="margin-top:14px;">
+      <div class="lab-card-top">
+        <h3>Embedded CLI Practice</h3>
+        <div class="toolbar" style="margin:0;">
+          <a class="btn" href="cli-simulator.html">Open Full CLI</a>
+        </div>
+      </div>
+      <p class="muted">Run commands alongside lab steps without leaving the page. Use the full CLI view for a larger workspace and command search.</p>
+
+      <section class="terminal" style="margin-top:14px;">
+        <div class="terminal-head">
+          <div class="term-lights"><span></span><span></span><span></span></div>
+          <div class="terminal-actions">
+            <span id="cli-mode-indicator" class="chip">Mode: User EXEC</span>
+            <button id="cli-reset">Reset Device</button>
+            <button id="cli-clear">Clear</button>
+          </div>
+        </div>
+        <div id="cli-output" class="terminal-body"></div>
+        <div class="term-input-wrap">
+          <input id="cli-input" placeholder="Type command and press Enter">
+        </div>
+      </section>
+
+      <div class="card" style="margin-top:14px;">
+        <h3>Quick Commands</h3>
+        <div id="cli-quick-commands" class="chip-row">
+          <button class="chip quick-cmd" data-command="enable">enable</button>
+          <button class="chip quick-cmd" data-command="show ip interface brief">show ip interface brief</button>
+          <button class="chip quick-cmd" data-command="configure terminal">configure terminal</button>
+          <button class="chip quick-cmd" data-command="interface g0/0">interface g0/0</button>
+          <button class="chip quick-cmd" data-command="ip address 192.168.1.1 255.255.255.0">ip address ...</button>
+          <button class="chip quick-cmd" data-command="no shutdown">no shutdown</button>
+          <button class="chip quick-cmd" data-command="show running-config">show running-config</button>
+        </div>
+        <p class="muted footer-note">Tips: <span class="kbd">Up/Down</span> command history, <span class="kbd">Tab</span> autocomplete, <span class="kbd">Ctrl + L</span> clear terminal.</p>
+      </div>
+
+      <details style="margin-top:14px;">
+        <summary>Search Cisco Command Database</summary>
+        <div class="search-box" style="margin-top:10px;">
+          <input id="cli-search" placeholder="Search command or description">
+          <select id="cli-search-mode" style="max-width:220px;">
+            <option value="all">All modes</option>
+            <option value="any">Any mode</option>
+            <option value="user">User EXEC</option>
+            <option value="privileged">Privileged EXEC</option>
+            <option value="config">Global config</option>
+            <option value="interface">Interface config</option>
+            <option value="router_ospf">Router OSPF config</option>
+          </select>
+        </div>
+        <p id="cli-search-count" class="muted" style="margin:8px 0 0;">0 commands</p>
+        <div id="cli-search-results" class="grid" style="margin-top:10px;"></div>
+      </details>
+    </section>
+
+    <section id="lab-list" class="grid grid-3" style="margin-top:14px;"></section>
+  </main>
+
+  <script src="js/progress.js" defer></script>
+  <script src="js/main.js" defer></script>
+  <script src="js/labs.js" defer></script>
+  <script src="js/cli-simulator.js" defer></script>
+</body>
+</html>

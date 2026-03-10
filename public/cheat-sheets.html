@@ -1,0 +1,206 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Networking Cheat Sheets</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="cheats">
+  <header class="topbar">
+    <nav class="nav">
+      <a class="brand" href="index.html">RouteForge NetLab</a>
+      <div class="nav-links">
+        <a href="index.html">Dashboard</a>
+        <a href="learn.html">Learn</a>
+        <a href="quizzes.html">Quizzes</a>
+        <a href="subnet-trainer.html">Subnet</a>
+        <a href="calculators.html">Calculators</a>
+        <a href="labs.html">Labs</a>
+        <a href="flashcards.html">Flashcards</a>
+        <a href="cli-simulator.html">CLI</a>
+        <a href="topology-builder.html">Topology</a>
+        <a class="active" href="cheat-sheets.html">Cheat Sheets</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>Quick Networking References</h1>
+      <p>Use these snapshots for exam revision and troubleshooting workflows.</p>
+    </section>
+
+    <section class="grid grid-3" style="margin-top:14px;">
+      <article class="card">
+        <h3>Common Cisco Commands</h3>
+        <pre>show running-config
+show startup-config
+show ip interface brief
+show ip route
+show interfaces status
+show vlan brief
+show spanning-tree
+show ip ospf neighbor</pre>
+      </article>
+
+      <article class="card">
+        <h3>Well-Known Ports</h3>
+        <pre>20/21 FTP
+22 SSH
+23 Telnet
+25 SMTP
+53 DNS
+67/68 DHCP
+80 HTTP
+110 POP3
+143 IMAP
+161 SNMP
+443 HTTPS</pre>
+      </article>
+
+      <article class="card">
+        <h3>OSI Layers Summary</h3>
+        <pre>7 Application
+6 Presentation
+5 Session
+4 Transport
+3 Network
+2 Data Link
+1 Physical
+Mnemonic: All People Seem To Need Data Processing</pre>
+      </article>
+
+      <article class="card">
+        <h3>Subnetting Shortcuts</h3>
+        <pre>/24 => 256 addresses, 254 usable
+/25 => 128 addresses, 126 usable
+/26 => 64 addresses, 62 usable
+/27 => 32 addresses, 30 usable
+/28 => 16 addresses, 14 usable
+/29 => 8 addresses, 6 usable
+/30 => 4 addresses, 2 usable</pre>
+      </article>
+
+      <article class="card">
+        <h3>Subnetting Formula</h3>
+        <pre>Hosts per subnet = 2^(32 - CIDR) - 2
+Subnets added = 2^borrowed bits
+Block size = 256 - mask octet
+Network: IP AND Mask
+Broadcast: Network OR (inverse mask)</pre>
+      </article>
+
+      <article class="card">
+        <h3>Private & Reserved IPv4</h3>
+        <pre>10.0.0.0/8 (Private)
+172.16.0.0/12 (Private)
+192.168.0.0/16 (Private)
+127.0.0.0/8 (Loopback)
+169.254.0.0/16 (Link-local)</pre>
+      </article>
+
+      <article class="card">
+        <h3>IPv6 Essentials</h3>
+        <pre>Global: 2000::/3
+Unique local: fc00::/7
+Link-local: fe80::/10
+Multicast: ff00::/8
+Loopback: ::1
+Unspecified: ::</pre>
+      </article>
+
+      <article class="card">
+        <h3>VLAN & Trunk Quick Config</h3>
+        <pre>vlan 10
+ name Users
+interface g0/1
+ switchport mode access
+ switchport access vlan 10
+interface g0/2
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20</pre>
+      </article>
+
+      <article class="card">
+        <h3>STP States & Roles</h3>
+        <pre>States: Blocking, Listening, Learning, Forwarding
+Roles: Root, Designated, Alternate, Backup
+Root bridge = lowest priority + MAC</pre>
+      </article>
+
+      <article class="card">
+        <h3>Routing Protocol Defaults</h3>
+        <pre>OSPF: Area 0 backbone, AD 110
+EIGRP: Classic, AD 90
+RIP v2: AD 120, 15 hop max
+BGP: AD 20 (eBGP), 200 (iBGP)</pre>
+      </article>
+
+      <article class="card">
+        <h3>OSPF Quick Commands</h3>
+        <pre>router ospf 1
+ network 10.0.0.0 0.0.0.255 area 0
+show ip ospf neighbor
+show ip ospf interface brief</pre>
+      </article>
+
+      <article class="card">
+        <h3>ACL Wildcard Examples</h3>
+        <pre>Host: 192.168.1.10 -> 0.0.0.0
+/24: 192.168.1.0 -> 0.0.0.255
+/30: 10.0.0.0 -> 0.0.0.3
+Match any: 0.0.0.0 255.255.255.255</pre>
+      </article>
+
+      <article class="card">
+        <h3>NAT/PAT Cheats</h3>
+        <pre>access-list 1 permit 10.0.0.0 0.0.0.255
+ip nat inside source list 1 interface g0/0 overload
+ip nat inside  (LAN)
+ip nat outside (WAN)
+show ip nat translations</pre>
+      </article>
+
+      <article class="card">
+        <h3>DHCP DORA</h3>
+        <pre>Discover -> Offer -> Request -> Acknowledge
+Ports: UDP 67 (server), UDP 68 (client)</pre>
+      </article>
+
+      <article class="card">
+        <h3>Layered Troubleshooting Commands</h3>
+        <pre>L1/L2: show interfaces, show vlan brief
+L2: show spanning-tree, show mac address-table
+L3: show ip route, show arp, ping, traceroute
+Services: show ip dhcp binding, nslookup</pre>
+      </article>
+
+      <article class="card">
+        <h3>Troubleshooting Checklist</h3>
+        <ul class="list">
+          <li>Physical: cable, speed/duplex, interface up/down</li>
+          <li>Layer 2: VLAN assignment, trunk allow list, STP state</li>
+          <li>Layer 3: IP/mask, default gateway, routing table</li>
+          <li>Policy: ACL/NAT order and hit counters</li>
+          <li>Services: DHCP lease, DNS resolution, app port reachability</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h3>Exam Mode Tips</h3>
+        <ul class="list">
+          <li>Write subnet block sizes from memory</li>
+          <li>Check wildcard masks by inversion</li>
+          <li>Use show commands before debug</li>
+          <li>Verify requirements before applying ACLs</li>
+          <li>Save config after each stable milestone</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+
+  <script src="js/progress.js" defer></script>
+  <script src="js/main.js" defer></script>
+</body>
+</html>

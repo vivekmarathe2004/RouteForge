@@ -1,0 +1,66 @@
+﻿[
+  {
+    "id": "s1",
+    "type": "network-address",
+    "difficulty": "easy",
+    "ip": "192.168.10.77",
+    "mask": "255.255.255.192",
+    "answer": "192.168.10.64"
+  },
+  {
+    "id": "s2",
+    "type": "broadcast",
+    "difficulty": "easy",
+    "ip": "10.10.4.21",
+    "mask": "255.255.255.224",
+    "answer": "10.10.4.31"
+  },
+  {
+    "id": "s3",
+    "type": "hosts",
+    "difficulty": "easy",
+    "ip": "172.16.1.0",
+    "mask": "255.255.255.0",
+    "answer": "254"
+  },
+  {
+    "id": "s4",
+    "type": "cidr",
+    "difficulty": "easy",
+    "ip": "192.168.1.0",
+    "mask": "255.255.255.248",
+    "answer": "/29"
+  },
+  {
+    "id": "s5",
+    "type": "network-address",
+    "difficulty": "medium",
+    "ip": "172.20.99.200",
+    "mask": "255.255.252.0",
+    "answer": "172.20.96.0"
+  },
+  {
+    "id": "s6",
+    "type": "broadcast",
+    "difficulty": "medium",
+    "ip": "10.200.45.100",
+    "mask": "255.255.240.0",
+    "answer": "10.200.47.255"
+  },
+  {
+    "id": "s7",
+    "type": "hosts",
+    "difficulty": "medium",
+    "ip": "172.31.0.0",
+    "mask": "255.255.255.192",
+    "answer": "62"
+  },
+  {
+    "id": "s8",
+    "type": "cidr",
+    "difficulty": "hard",
+    "ip": "10.10.0.0",
+    "mask": "255.255.254.0",
+    "answer": "/23"
+  }
+]

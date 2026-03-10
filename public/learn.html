@@ -1,0 +1,311 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learn Networking Modules</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="learn">
+  <header class="topbar">
+    <nav class="nav">
+      <a class="brand" href="index.html">RouteForge NetLab</a>
+      <div class="nav-links">
+        <a href="index.html">Dashboard</a>
+        <a class="active" href="learn.html">Learn</a>
+        <a href="quizzes.html">Quizzes</a>
+        <a href="subnet-trainer.html">Subnet</a>
+        <a href="calculators.html">Calculators</a>
+        <a href="labs.html">Labs</a>
+        <a href="flashcards.html">Flashcards</a>
+        <a href="cli-simulator.html">CLI</a>
+        <a href="topology-builder.html">Topology</a>
+        <a href="cheat-sheets.html">Cheat Sheets</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>Structured CCNA and CCNP Modules</h1>
+      <p>Each topic includes explanation, diagram, real use case, Cisco CLI examples, and troubleshooting workflow.</p>
+      <div class="toolbar">
+        <div>
+          <label for="track">Track</label>
+          <select id="track">
+            <option value="ccna">CCNA</option>
+            <option value="ccnp">CCNP</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid grid-3" style="margin-top:14px;">
+      <article class="card">
+        <h3>Learning Roadmap</h3>
+        <ul class="list">
+          <li>Foundations: OSI/TCP-IP, addressing, subnetting, cabling</li>
+          <li>Switching: VLANs, trunks, STP, EtherChannel</li>
+          <li>Routing: static routes, OSPF, route filtering</li>
+          <li>Services: DHCP, DNS, NAT, IPv6 transition</li>
+          <li>Security + Ops: ACLs, AAA, monitoring, troubleshooting</li>
+          <li>CCNP: BGP, advanced OSPF, redistribution, QoS, MPLS, VPNs</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h3>Systematic Workflow</h3>
+        <pre>Plan -> Design -> Build -> Verify -> Secure -> Monitor
+L1/L2: cabling, speed/duplex, VLAN, STP
+L3: IP/mask, gateway, routing table
+Policy: ACL/NAT order, hit counts
+Services: DHCP/DNS reachability</pre>
+      </article>
+
+      <article class="card">
+        <h3>Reference Index</h3>
+        <ul class="list">
+          <li>RFC 1918 (Private IPv4)</li>
+          <li>RFC 2460 / 8200 (IPv6)</li>
+          <li>RFC 793 (TCP), RFC 768 (UDP)</li>
+          <li>RFC 2328 (OSPFv2), RFC 5340 (OSPFv3)</li>
+          <li>IEEE 802.1Q (VLAN), 802.1D/802.1w (STP/RSTP)</li>
+          <li>Cisco IOS Configuration Guides + Command References</li>
+        </ul>
+      </article>
+    </section>
+
+    <section id="topic-list" class="grid grid-3" style="margin-top:14px;"></section>
+
+    <section class="card" style="margin-top:18px;">
+      <h2>CCNA/CCNP Command Reference</h2>
+      <p class="muted">Search the command library with explanations and usage notes.</p>
+      <div class="toolbar">
+        <div style="min-width:220px;">
+          <label for="cmd-search">Search</label>
+          <input id="cmd-search" placeholder="e.g., show ip route">
+        </div>
+        <div>
+          <label for="cmd-level">Level</label>
+          <select id="cmd-level">
+            <option value="all">All</option>
+            <option value="CCNA">CCNA</option>
+            <option value="CCNP">CCNP</option>
+          </select>
+        </div>
+        <div>
+          <label for="cmd-category">Category</label>
+          <select id="cmd-category">
+            <option value="all">All</option>
+          </select>
+        </div>
+        <div>
+          <label for="cmd-mode">Mode</label>
+          <select id="cmd-mode">
+            <option value="all">All</option>
+            <option value="user">User</option>
+            <option value="privileged">Privileged</option>
+            <option value="config">Global config</option>
+            <option value="interface">Interface</option>
+            <option value="router">Router</option>
+            <option value="line">Line</option>
+            <option value="any">Any</option>
+          </select>
+        </div>
+      </div>
+      <p id="cmd-count" class="muted"></p>
+    </section>
+
+    <section id="command-list" class="grid grid-3 command-grid"></section>
+  </main>
+
+  <script src="js/progress.js" defer></script>
+  <script src="js/main.js" defer></script>
+  <script>
+    (function () {
+      function escapeHtml(value) {
+        return String(value || "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll("\"", "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function renderTopic(topic, highlight = false) {
+        return `
+          <article class="card topic-card ${highlight ? "highlight" : ""}">
+            <h3>${topic.title}</h3>
+            <p class="muted">${topic.summary}</p>
+            <p><strong>Network Diagram:</strong> ${topic.diagram}</p>
+            <p><strong>Real Example:</strong> ${topic.example}</p>
+            <p><strong>Troubleshooting:</strong> ${topic.troubleshooting}</p>
+            <pre>${topic.cli.join("\n")}</pre>
+            <div class="chip-row" style="margin-top:8px;">${(topic.recommendedNext || []).map(n => `<span class='chip'>Next: ${n}</span>`).join("")}</div>
+          </article>
+        `;
+      }
+
+      async function loadTopics(track, focusId, query) {
+        const list = document.getElementById("topic-list");
+        list.innerHTML = "<article class='card'>Loading topics...</article>";
+
+        try {
+          const response = await fetch(`/api/topics?track=${track}`);
+          const topics = await response.json();
+          let filtered = topics;
+
+          if (query) {
+            const needle = query.toLowerCase();
+            filtered = filtered.filter((topic) => {
+              return [topic.title, topic.summary, topic.diagram, topic.example, topic.troubleshooting]
+                .join(" ")
+                .toLowerCase()
+                .includes(needle);
+            });
+          }
+
+          if (focusId) {
+            const match = filtered.find((topic) => topic.id === focusId);
+            const rest = filtered.filter((topic) => topic.id !== focusId);
+            if (match) {
+              list.innerHTML = [renderTopic(match, true)].concat(rest.map((t) => renderTopic(t))).join("");
+              return;
+            }
+          }
+
+          list.innerHTML = filtered.map((topic) => renderTopic(topic)).join("");
+        } catch (error) {
+          list.innerHTML = `<article class='card'><p class='status-bad'>Failed to load topics: ${error.message}</p></article>`;
+        }
+      }
+
+      let commandDb = [];
+
+      function populateCommandCategories() {
+        const categoryEl = document.getElementById("cmd-category");
+        if (!categoryEl) return;
+        const categories = Array.from(new Set(commandDb.map((item) => item.category).filter(Boolean))).sort();
+        categoryEl.innerHTML = `<option value="all">All</option>` + categories.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+      }
+
+      function filterCommands() {
+        const query = String(document.getElementById("cmd-search").value || "").trim().toLowerCase();
+        const level = document.getElementById("cmd-level").value;
+        const category = document.getElementById("cmd-category").value;
+        const mode = document.getElementById("cmd-mode").value;
+
+        let list = commandDb.slice();
+
+        if (level !== "all") {
+          list = list.filter((item) => item.level === level || item.level === "Both");
+        }
+
+        if (category !== "all") {
+          list = list.filter((item) => item.category === category);
+        }
+
+        if (mode !== "all") {
+          list = list.filter((item) => item.mode === mode || item.mode === "any");
+        }
+
+        if (query) {
+          list = list.filter((item) => {
+            return [
+              item.command,
+              item.description,
+              item.notes,
+              item.category
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase()
+              .includes(query);
+          });
+        }
+
+        return list;
+      }
+
+      function renderCommands() {
+        const listEl = document.getElementById("command-list");
+        if (!listEl) return;
+
+        const list = filterCommands();
+        const countEl = document.getElementById("cmd-count");
+        if (countEl) {
+          countEl.textContent = `${list.length} commands`;
+        }
+
+        if (!list.length) {
+          listEl.innerHTML = "<article class='card'><p class='muted'>No matching commands.</p></article>";
+          return;
+        }
+
+        listEl.innerHTML = list.map((item) => {
+          const meta = [
+            `<span class="chip">${escapeHtml(item.level || "CCNA")}</span>`,
+            `<span class="chip">${escapeHtml(item.mode || "any")}</span>`,
+            item.category ? `<span class="chip">${escapeHtml(item.category)}</span>` : ""
+          ].join("");
+
+          return `
+            <article class="card command-card">
+              <div class="lab-card-top">
+                <strong>${escapeHtml(item.command)}</strong>
+                <div class="chip-row">${meta}</div>
+              </div>
+              <p class="muted" style="margin:6px 0 8px;">${escapeHtml(item.description || "")}</p>
+              ${item.notes ? `<p class="muted" style="margin:0 0 8px;">${escapeHtml(item.notes)}</p>` : ""}
+              <pre>${escapeHtml(item.example || item.command)}</pre>
+            </article>
+          `;
+        }).join("");
+      }
+
+      async function loadCommandReference() {
+        const listEl = document.getElementById("command-list");
+        if (!listEl) return;
+        listEl.innerHTML = "<article class='card'>Loading command reference...</article>";
+
+        try {
+          const response = await fetch("/api/cli-commands");
+          const data = await response.json();
+          commandDb = data.commands || [];
+          populateCommandCategories();
+          renderCommands();
+        } catch (error) {
+          listEl.innerHTML = `<article class='card'><p class='status-bad'>Failed to load commands: ${error.message}</p></article>`;
+        }
+      }
+
+      function bindCommandFilters() {
+        const controls = ["cmd-search", "cmd-level", "cmd-category", "cmd-mode"];
+        controls.forEach((id) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          const eventName = id === "cmd-search" ? "input" : "change";
+          el.addEventListener(eventName, renderCommands);
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const track = document.getElementById("track");
+        const params = new URLSearchParams(window.location.search);
+        const trackParam = params.get("track");
+        const focusId = params.get("topic");
+        const query = params.get("q");
+
+        if (trackParam) {
+          track.value = trackParam;
+        }
+
+        loadTopics(track.value, focusId, query);
+        track.addEventListener("change", () => loadTopics(track.value, focusId, query));
+        bindCommandFilters();
+        loadCommandReference();
+      });
+    })();
+  </script>
+</body>
+</html>
