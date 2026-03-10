@@ -1,10 +1,1 @@
-node_modules/
-.env
-.env.*
-.DS_Store
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-.vscode/
-.idea/
+.env.env.*.DS_Storenpm-debug.log*yarn-debug.log*yarn-error.log*.pnpm-debug.log*.vscode/.idea/
