@@ -2,6 +2,44 @@
   const page = document.body.dataset.page || "";
   let authMode = "login";
   let authSubmitting = false;
+  const navConfig = [
+    {
+      type: "link",
+      label: "Dashboard",
+      href: "index.html",
+      pages: ["dashboard"]
+    },
+    {
+      type: "group",
+      label: "Learn",
+      pages: ["learn", "flashcards", "cheat-sheets"],
+      items: [
+        { label: "Modules", href: "learn.html", description: "Structured CCNA and CCNP lessons." },
+        { label: "Flashcards", href: "flashcards.html", description: "Quick recall for ports, protocols, and terms." },
+        { label: "Cheat Sheets", href: "cheat-sheets.html", description: "Compact command and theory references." }
+      ]
+    },
+    {
+      type: "group",
+      label: "Practice",
+      pages: ["quizzes", "labs"],
+      items: [
+        { label: "Quizzes", href: "quizzes.html", description: "Timed questions, explanations, and score tracking." },
+        { label: "Labs", href: "labs.html", description: "Hands-on guided scenarios with CLI workflows." }
+      ]
+    },
+    {
+      type: "group",
+      label: "Tools",
+      pages: ["subnet", "calculators", "cli-simulator", "topology"],
+      items: [
+        { label: "Subnet Trainer", href: "subnet-trainer.html", description: "Speed drills for addressing and masks." },
+        { label: "Calculators", href: "calculators.html", description: "Network helpers for quick engineering math." },
+        { label: "CLI Simulator", href: "cli-simulator.html", description: "Command practice with searchable references." },
+        { label: "Topology Builder", href: "topology-builder.html", description: "Visual device layout and link planning." }
+      ]
+    }
+  ];
 
   function escapeHtml(value) {
     return String(value)
@@ -28,6 +66,70 @@
       loginTab: document.getElementById("auth-tab-login"),
       registerTab: document.getElementById("auth-tab-register")
     };
+  }
+
+  function renderNavigation() {
+    const nav = document.querySelector(".nav");
+    if (!nav) return;
+
+    const brand = nav.querySelector(".brand");
+    if (brand) {
+      brand.innerHTML = `
+        <span class="brand-core">
+          <span class="brand-mark">RF</span>
+          <span class="brand-copy">
+            <span class="brand-title">RouteForge</span>
+            <span class="brand-subtitle">NetLab</span>
+          </span>
+        </span>
+      `;
+    }
+
+    let navLinks = nav.querySelector(".nav-links");
+    if (!navLinks) {
+      navLinks = document.createElement("div");
+      navLinks.className = "nav-links";
+      if (brand && brand.nextSibling) {
+        nav.insertBefore(navLinks, brand.nextSibling);
+      } else {
+        nav.appendChild(navLinks);
+      }
+    }
+
+    navLinks.innerHTML = navConfig.map((entry, index) => {
+      const isActive = entry.pages.includes(page);
+      if (entry.type === "link") {
+        return `<a class="nav-link ${isActive ? "active" : ""}" href="${entry.href}">${entry.label}</a>`;
+      }
+
+      const items = entry.items.map((item) => {
+        const itemPage = item.href
+          .replace(".html", "")
+          .replace("subnet-trainer", "subnet")
+          .replace("cli-simulator", "cli-simulator")
+          .replace("topology-builder", "topology")
+          .replace("cheat-sheets", "cheat-sheets");
+
+        return `
+          <a class="nav-menu-link ${itemPage === page ? "active" : ""}" href="${item.href}">
+            <span class="nav-menu-title">${item.label}</span>
+            <span class="nav-menu-copy">${item.description}</span>
+          </a>
+        `;
+      }).join("");
+
+      return `
+        <div class="nav-group ${isActive ? "active" : ""}" data-nav-group="${index}">
+          <button type="button" class="nav-group-trigger" aria-expanded="false">
+            <span>${entry.label}</span>
+            <span class="nav-group-caret" aria-hidden="true">+</span>
+          </button>
+          <div class="nav-menu" role="menu" aria-label="${entry.label}">
+            ${items}
+          </div>
+        </div>
+      `;
+    }).join("");
   }
 
   function ensureAuthUi() {
@@ -206,7 +308,7 @@
     if (session && session.user) {
       navAuth.innerHTML = `
         <div class="auth-pill">
-          <span class="chip auth-chip">Sync: ${escapeHtml(session.user.name)}</span>
+          <span class="auth-guest-label">Signed in as ${escapeHtml(session.user.name)}</span>
           <button type="button" id="auth-logout-button" class="auth-logout-btn">Sign Out</button>
         </div>
       `;
@@ -216,7 +318,7 @@
 
     navAuth.innerHTML = `
       <div class="auth-pill">
-        <span class="chip auth-chip">Guest mode</span>
+        <span class="auth-guest-label">Guest</span>
         <button type="button" id="auth-login-button" class="auth-login-btn">Sign In</button>
         <button type="button" id="auth-register-button" class="btn btn-primary auth-register-btn">Create Account</button>
       </div>
@@ -368,6 +470,7 @@
   };
 
   document.addEventListener("DOMContentLoaded", async () => {
+    renderNavigation();
     ensureAuthUi();
     switchAuthMode("login");
     bindShortcuts();
