@@ -19,7 +19,8 @@
     saved: "routeforge.topology.saved",
     current: "routeforge.topology.current",
     cliContexts: "routeforge.cli.contexts",
-    cliContext: "routeforge.cli.context"
+    cliContext: "routeforge.cli.context",
+    recentDevices: "routeforge.topology.recent-devices"
   };
 
   const NODE_WIDTH = 128;
@@ -78,6 +79,12 @@
     paletteGroups: Array.from(document.querySelectorAll(".topology-palette-group")),
     paletteItems: Array.from(document.querySelectorAll(".device-item")),
     deviceSearch: document.getElementById("topology-device-search"),
+    dockAvailable: document.getElementById("topology-dock-available"),
+    dockOnCanvas: document.getElementById("topology-dock-on-canvas"),
+    dockLastAdded: document.getElementById("topology-dock-last-added"),
+    quickPickButtons: Array.from(document.querySelectorAll("[data-quick-device]")),
+    recentDevices: document.getElementById("topology-recent-devices"),
+    groupToggleButtons: Array.from(document.querySelectorAll("[data-group-toggle]")),
     inspectorTitle: document.getElementById("inspector-device-title"),
     inspectorMeta: document.getElementById("inspector-device-meta"),
     cliBackdrop: document.getElementById("topology-cli-backdrop"),
@@ -236,6 +243,77 @@
     if (el.emptyState) {
       el.emptyState.classList.toggle("is-hidden", state.nodes.length > 0);
     }
+    updateDockOverview();
+  }
+
+  function readRecentDevices() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(STORAGE_KEYS.recentDevices) || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_error) {
+      return [];
+    }
+  }
+
+  function writeRecentDevices(list) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.recentDevices, JSON.stringify(list));
+    } catch (_error) {
+      // ignore
+    }
+  }
+
+  function pushRecentDevice(type, model) {
+    const entry = {
+      type,
+      model: model || "",
+      category: deviceMeta(type).category
+    };
+    const next = readRecentDevices()
+      .filter((item) => !(item.type === entry.type && item.model === entry.model))
+      .slice(0, 5);
+    next.unshift(entry);
+    writeRecentDevices(next.slice(0, 5));
+    renderRecentDevices();
+  }
+
+  function renderRecentDevices() {
+    if (!el.recentDevices) return;
+    const recent = readRecentDevices();
+    if (!recent.length) {
+      el.recentDevices.innerHTML = '<p class="muted topology-recent-empty">Add a few devices and they will appear here for quick reuse.</p>';
+      return;
+    }
+
+    el.recentDevices.innerHTML = recent
+      .map((item) => {
+        const title = item.model || item.type;
+        const category = item.category || deviceMeta(item.type).category;
+        return `
+          <div class="topology-recent-chip">
+            <div>
+              <strong>${title}</strong>
+              <span>${category.charAt(0).toUpperCase() + category.slice(1)}</span>
+            </div>
+            <button type="button" data-recent-device="${item.type}" data-recent-model="${item.model || ""}">Add</button>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
+  function updateDockOverview() {
+    if (el.dockAvailable) {
+      const visibleInventory = el.paletteItems.filter((item) => !item.hidden).length;
+      el.dockAvailable.textContent = String(visibleInventory);
+    }
+    if (el.dockOnCanvas) {
+      el.dockOnCanvas.textContent = String(state.nodes.length);
+    }
+    if (el.dockLastAdded) {
+      const lastNode = state.nodes[state.nodes.length - 1];
+      el.dockLastAdded.textContent = lastNode ? (lastNode.model || lastNode.type) : "None";
+    }
   }
 
   function isCliModalOpen() {
@@ -353,6 +431,7 @@
   function addDeviceFromPalette(type, model) {
     const { x, y } = nextPlacement();
     createNode(type, model, x, y, { label: model || type });
+    pushRecentDevice(type, model);
     renderNodes();
     renderConnections();
     schedulePersistCurrentTopology();
@@ -1021,6 +1100,34 @@
     applyPaletteFilters();
   }
 
+  function bindDockEnhancements() {
+    el.quickPickButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        addDeviceFromPalette(button.dataset.quickDevice, button.dataset.quickModel || "");
+      });
+    });
+
+    if (el.recentDevices) {
+      el.recentDevices.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-recent-device]");
+        if (!button) return;
+        addDeviceFromPalette(button.dataset.recentDevice, button.dataset.recentModel || "");
+      });
+    }
+
+    el.groupToggleButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const group = button.closest(".topology-palette-group");
+        if (!group) return;
+        group.classList.toggle("is-collapsed");
+        button.textContent = group.classList.contains("is-collapsed") ? "Show" : "Hide";
+      });
+    });
+
+    renderRecentDevices();
+    updateDockOverview();
+  }
+
   function serializeTopology() {
     return {
       nodes: state.nodes,
@@ -1610,6 +1717,7 @@
     bindModeControls();
     bindPaletteDnD();
     bindPaletteFilters();
+    bindDockEnhancements();
     bindMove();
     bindClear();
     bindLayoutControls();

@@ -39,6 +39,56 @@
             <span class="topology-panel-note">Drag or add</span>
           </div>
 
+          <div class="topology-dock-overview">
+            <div class="topology-dock-stat">
+              <strong id="topology-dock-available">0</strong>
+              <span>Available</span>
+            </div>
+            <div class="topology-dock-stat">
+              <strong id="topology-dock-on-canvas">0</strong>
+              <span>On Canvas</span>
+            </div>
+            <div class="topology-dock-stat">
+              <strong id="topology-dock-last-added">None</strong>
+              <span>Last Added</span>
+            </div>
+          </div>
+
+          <section class="topology-dock-featured">
+            <div class="topology-dock-section-head">
+              <h3>Quick Picks</h3>
+              <span>Common lab starters</span>
+            </div>
+            <div class="topology-quick-picks">
+              <button class="topology-quick-pick topology-quick-pick-router" type="button" data-quick-device="Router" data-quick-model="ISR 4331">
+                <strong>ISR 4331</strong>
+                <span>Branch router</span>
+              </button>
+              <button class="topology-quick-pick topology-quick-pick-switch" type="button" data-quick-device="Switch" data-quick-model="Catalyst 2960">
+                <strong>Catalyst 2960</strong>
+                <span>Access switch</span>
+              </button>
+              <button class="topology-quick-pick topology-quick-pick-endpoint" type="button" data-quick-device="PC" data-quick-model="Windows PC">
+                <strong>Windows PC</strong>
+                <span>Endpoint</span>
+              </button>
+              <button class="topology-quick-pick topology-quick-pick-cloud" type="button" data-quick-device="Cloud" data-quick-model="Internet">
+                <strong>Internet Cloud</strong>
+                <span>WAN edge</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="topology-dock-recent">
+            <div class="topology-dock-section-head">
+              <h3>Recent Devices</h3>
+              <span>Last used in this browser</span>
+            </div>
+            <div id="topology-recent-devices" class="topology-recent-list">
+              <p class="muted topology-recent-empty">Add a few devices and they will appear here for quick reuse.</p>
+            </div>
+          </section>
+
           <div class="topology-filter-row" id="topology-category-filters">
             <button class="chip topology-filter is-active" type="button" data-category="all">All</button>
             <button class="chip topology-filter" type="button" data-category="routers">Routers</button>
@@ -56,8 +106,11 @@
           <div class="topology-palette-groups">
             <section class="topology-palette-group" data-category="routers">
               <div class="topology-palette-group-head">
-                <h3>Routers</h3>
-                <span>Routing</span>
+                <div>
+                  <h3>Routers</h3>
+                  <span>Routing</span>
+                </div>
+                <button class="topology-group-toggle" type="button" data-group-toggle>Hide</button>
               </div>
               <div class="device-item" draggable="true" data-device="Router" data-model="ISR 2911" data-category="routers">
                 <div class="device-item-copy">
@@ -93,8 +146,11 @@
 
             <section class="topology-palette-group" data-category="switches">
               <div class="topology-palette-group-head">
-                <h3>Switches</h3>
-                <span>Campus LAN</span>
+                <div>
+                  <h3>Switches</h3>
+                  <span>Campus LAN</span>
+                </div>
+                <button class="topology-group-toggle" type="button" data-group-toggle>Hide</button>
               </div>
               <div class="device-item" draggable="true" data-device="Switch" data-model="Catalyst 2960" data-category="switches">
                 <div class="device-item-copy">
@@ -130,8 +186,11 @@
 
             <section class="topology-palette-group" data-category="security">
               <div class="topology-palette-group-head">
-                <h3>Security and Wireless</h3>
-                <span>Edge control</span>
+                <div>
+                  <h3>Security and Wireless</h3>
+                  <span>Edge control</span>
+                </div>
+                <button class="topology-group-toggle" type="button" data-group-toggle>Hide</button>
               </div>
               <div class="device-item" draggable="true" data-device="Firewall" data-model="ASA 5506-X" data-category="security">
                 <div class="device-item-copy">
@@ -167,8 +226,11 @@
 
             <section class="topology-palette-group" data-category="endpoints">
               <div class="topology-palette-group-head">
-                <h3>Endpoints</h3>
-                <span>Clients</span>
+                <div>
+                  <h3>Endpoints</h3>
+                  <span>Clients</span>
+                </div>
+                <button class="topology-group-toggle" type="button" data-group-toggle>Hide</button>
               </div>
               <div class="device-item" draggable="true" data-device="PC" data-model="Windows PC" data-category="endpoints">
                 <div class="device-item-copy">
@@ -224,8 +286,11 @@
 
             <section class="topology-palette-group" data-category="wan">
               <div class="topology-palette-group-head">
-                <h3>WAN and Cloud</h3>
-                <span>External links</span>
+                <div>
+                  <h3>WAN and Cloud</h3>
+                  <span>External links</span>
+                </div>
+                <button class="topology-group-toggle" type="button" data-group-toggle>Hide</button>
               </div>
               <div class="device-item" draggable="true" data-device="Cloud" data-model="Internet" data-category="wan">
                 <div class="device-item-copy">
