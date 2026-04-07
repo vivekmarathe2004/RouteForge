@@ -1,6 +1,6 @@
 (function () {
   const page = document.body.dataset.page || "";
-  if (page !== "cli" && page !== "labs") return;
+  if (page !== "cli" && page !== "labs" && page !== "topology") return;
 
   const DEFAULT_INTERFACES = {
     "g0/0": { ip: "unassigned", mask: "", up: false, type: "GigabitEthernet" },
@@ -91,6 +91,10 @@
     return "GigabitEthernet";
   }
 
+  function interfaceDisplayName(key, data = null) {
+    return `${(data && data.type) || interfaceTypeByKey(key)}${interfaceSuffix(key)}`;
+  }
+
   function interfaceSuffix(key) {
     return key.replace(/^[a-z]+/i, "");
   }
@@ -140,12 +144,50 @@
     }
   }
 
+  function activateContext(context, options = {}) {
+    const settings = {
+      announce: true,
+      clear: false,
+      focus: false,
+      ...options
+    };
+
+    state.mode = "user";
+    state.currentInterface = null;
+    state.ospfNetworks = Array.isArray(context?.ospfNetworks) ? [...context.ospfNetworks] : [];
+    state.history = [];
+    state.historyIndex = -1;
+    state.context = null;
+    state.hostname = "RouterLab";
+    resetInterfaces();
+
+    if (context) {
+      applyContext(context);
+    }
+
+    updateModeIndicator();
+    persistContext();
+
+    if (settings.clear) {
+      clearTerminal();
+    }
+
+    if (settings.announce) {
+      writeReadyMessage();
+    }
+
+    if (settings.focus) {
+      el.input.focus();
+    }
+  }
+
   function persistContext() {
     if (!state.context || !state.context.deviceId) return;
     const payload = {
       ...state.context,
       hostname: state.hostname,
-      interfaces: state.interfaces
+      interfaces: state.interfaces,
+      ospfNetworks: [...state.ospfNetworks]
     };
 
     try {
@@ -171,6 +213,14 @@
     if (!el.modeIndicator) return;
     const label = modeLabels[state.mode] || "User EXEC";
     el.modeIndicator.textContent = `Mode: ${label}`;
+  }
+
+  function writeReadyMessage() {
+    if (state.context && state.context.label) {
+      writeLine(`Connected to ${state.context.label}. Type 'help' for starter commands.`);
+      return;
+    }
+    writeLine("Cisco IOS CLI Simulator ready. Type 'help' for starter commands.");
   }
 
   function writeLine(text, kind = "output") {
@@ -356,7 +406,7 @@
   function renderRunningConfig() {
     const interfaces = Object.entries(state.interfaces)
       .map(([name, data]) => {
-        const interfaceName = `${data.type || interfaceTypeByKey(name)}${interfaceSuffix(name)}`;
+        const interfaceName = interfaceDisplayName(name, data);
         const ipLine = data.ip === "unassigned" ? " no ip address" : ` ip address ${data.ip} ${data.mask}`;
         const adminLine = data.up ? " no shutdown" : " shutdown";
         return `interface ${interfaceName}\n${ipLine}\n${adminLine}`;
@@ -374,7 +424,7 @@
     return [
       "Interface              IP-Address      OK? Method Status                Protocol",
       ...Object.entries(state.interfaces).map(([name, data]) => {
-        const interfaceName = `${data.type || interfaceTypeByKey(name)}${interfaceSuffix(name)}`.padEnd(22, " ");
+        const interfaceName = interfaceDisplayName(name, data).padEnd(22, " ");
         const ip = String(data.ip).padEnd(15, " ");
         const status = data.up ? "up" : "administratively down";
         const protocol = data.up ? "up" : "down";
@@ -389,7 +439,7 @@
       .map(([name, item]) => {
         const prefix = maskToPrefix(item.mask);
         const network = networkFromIpMask(item.ip, item.mask);
-        const iface = `${item.type || interfaceTypeByKey(name)}${interfaceSuffix(name)}`;
+        const iface = interfaceDisplayName(name, item);
         return `C ${network}/${prefix} is directly connected, ${iface}`;
       });
 
@@ -400,7 +450,7 @@
       const prefix = wildcardToPrefix(wildcard);
       const renderedPrefix = prefix === null ? "24" : String(prefix);
       const firstIface = Object.keys(state.interfaces)[0] || "g0/1";
-      const ifaceName = `${interfaceTypeByKey(firstIface)}${interfaceSuffix(firstIface)}`;
+      const ifaceName = interfaceDisplayName(firstIface, state.interfaces[firstIface]);
       return `O ${network}/${renderedPrefix} [110/20] via 10.0.0.${index + 2}, 00:00:12, ${ifaceName}`;
     });
 
@@ -584,14 +634,14 @@
     if (lower.startsWith("interface ") && state.mode === "config") {
       const name = resolveInterfaceName(command.slice("interface ".length).trim());
       if (!name) {
-        writeLine("% Interface not supported in this simulator. Use g0/0 or g0/1.");
+        writeLine("% Interface not supported in this simulator. Use an interface that exists on the selected device.");
         return;
       }
 
       state.currentInterface = name;
       state.mode = "interface";
       updateModeIndicator();
-      writeLine(`Configuring interface GigabitEthernet${name.slice(1)}`);
+      writeLine(`Configuring interface ${interfaceDisplayName(name, state.interfaces[name])}`);
       return;
     }
 
@@ -796,7 +846,7 @@
 
     el.clear.addEventListener("click", () => {
       clearTerminal();
-      writeLine("Cisco IOS CLI Simulator ready. Type 'help' for starter commands.");
+      writeReadyMessage();
     });
 
     if (el.reset) {
@@ -872,6 +922,7 @@
   }
 
   function bindSearch() {
+    if (!el.search || !el.searchResult) return;
     el.search.addEventListener("input", renderSearchResults);
 
     if (el.searchMode) {
@@ -891,31 +942,36 @@
       await loadCommandDatabase();
       const context = loadContext();
       if (context) {
-        applyContext(context);
+        activateContext(context, { announce: false });
       }
       bindTerminal();
       bindSearch();
       updateModeIndicator();
-      renderSearchResults();
-      if (state.context && state.context.label) {
-        writeLine(`Connected to ${state.context.label}. Type 'help' for starter commands.`);
-      } else {
-        writeLine("Cisco IOS CLI Simulator ready. Type 'help' for starter commands.");
+      if (el.searchResult) {
+        renderSearchResults();
       }
-      el.input.focus();
+      writeReadyMessage();
+      if (page !== "topology") {
+        el.input.focus();
+      }
 
       window.RouteForgeCLI = {
         runCommands: (commands, options = {}) => enqueueCommands(commands, options),
+        setContext: (contextValue, options = {}) => activateContext(contextValue, { clear: true, announce: true, ...options }),
         setInput: (value, options = {}) => {
           el.input.value = String(value || "");
           if (options.focus) el.input.focus();
         },
         clear: clearTerminal,
+        focus: () => el.input.focus(),
+        resetDevice: () => resetDevice(),
         getHistory: () => [...state.history],
         getState: () => ({
           hostname: state.hostname,
           interfaces: JSON.parse(JSON.stringify(state.interfaces)),
-          context: state.context
+          context: state.context,
+          mode: state.mode,
+          ospfNetworks: [...state.ospfNetworks]
         })
       };
     } catch (error) {

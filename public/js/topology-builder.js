@@ -24,6 +24,7 @@
 
   const NODE_WIDTH = 128;
   const NODE_HEIGHT = 96;
+  const PERSIST_DELAY_MS = 120;
 
   const state = {
     nodes: [],
@@ -39,7 +40,10 @@
     gridSize: 20,
     inspectorNodeId: null,
     paletteCategory: "all",
-    searchTerm: ""
+    searchTerm: "",
+    persistTimer: null,
+    renderQueued: false,
+    pendingRender: { nodes: false, connections: false }
   };
 
   const el = {
@@ -76,6 +80,11 @@
     deviceSearch: document.getElementById("topology-device-search"),
     inspectorTitle: document.getElementById("inspector-device-title"),
     inspectorMeta: document.getElementById("inspector-device-meta"),
+    cliBackdrop: document.getElementById("topology-cli-backdrop"),
+    cliTitle: document.getElementById("topology-cli-title"),
+    cliMeta: document.getElementById("topology-cli-meta"),
+    cliOpenPage: document.getElementById("topology-cli-open-page"),
+    cliClose: document.getElementById("topology-cli-close"),
     inspectorEmpty: document.getElementById("inspector-empty"),
     inspectorPanel: document.getElementById("inspector-panel"),
     inspectorOpenCli: document.getElementById("inspector-open-cli"),
@@ -176,6 +185,41 @@
     if (el.hint) el.hint.textContent = text;
   }
 
+  function schedulePersistCurrentTopology(immediate = false) {
+    if (state.persistTimer) {
+      clearTimeout(state.persistTimer);
+      state.persistTimer = null;
+    }
+
+    if (immediate) {
+      persistCurrentTopology();
+      return;
+    }
+
+    state.persistTimer = setTimeout(() => {
+      state.persistTimer = null;
+      persistCurrentTopology();
+    }, PERSIST_DELAY_MS);
+  }
+
+  function queueRender(options = {}) {
+    state.pendingRender.nodes = state.pendingRender.nodes || Boolean(options.nodes);
+    state.pendingRender.connections = state.pendingRender.connections || Boolean(options.connections);
+    if (state.renderQueued) return;
+
+    state.renderQueued = true;
+    requestAnimationFrame(() => {
+      state.renderQueued = false;
+      const shouldRenderNodes = state.pendingRender.nodes;
+      const shouldRenderConnections = state.pendingRender.connections;
+      state.pendingRender.nodes = false;
+      state.pendingRender.connections = false;
+
+      if (shouldRenderNodes) renderNodes();
+      if (shouldRenderConnections) renderConnections();
+    });
+  }
+
   function deviceMeta(type) {
     return DEVICE_META[type] || { short: "DEV", family: "endpoint", category: "all" };
   }
@@ -192,6 +236,93 @@
     if (el.emptyState) {
       el.emptyState.classList.toggle("is-hidden", state.nodes.length > 0);
     }
+  }
+
+  function isCliModalOpen() {
+    return Boolean(el.cliBackdrop && !el.cliBackdrop.classList.contains("is-hidden"));
+  }
+
+  function buildCliContext(node) {
+    let savedContext = null;
+    try {
+      const all = JSON.parse(localStorage.getItem(STORAGE_KEYS.cliContexts) || "{}");
+      savedContext = all[node.id] || null;
+    } catch (_error) {
+      savedContext = null;
+    }
+
+    const interfaces = {};
+    node.ports.forEach((p) => {
+      if (p.id.startsWith("g") || p.id.startsWith("fa") || p.id.startsWith("s")) {
+        let ipValue = p.ip || "unassigned";
+        let maskValue = p.mask || "";
+        if (ipValue.includes("/")) {
+          const parts = ipValue.split("/");
+          ipValue = parts[0];
+          maskValue = maskValue || prefixToMask(parts[1]);
+        }
+        interfaces[p.id] = {
+          ip: ipValue,
+          mask: maskValue,
+          up: Boolean(p.up),
+          type: p.id.startsWith("g") ? "GigabitEthernet" : p.id.startsWith("fa") ? "FastEthernet" : "Serial"
+        };
+      }
+    });
+
+    return {
+      deviceId: node.id,
+      label: node.label,
+      hostname: node.config.hostname || node.label,
+      type: node.type,
+      model: node.model || "",
+      interfaces,
+      ospfNetworks: Array.isArray(savedContext?.ospfNetworks)
+        ? [...savedContext.ospfNetworks]
+        : Array.isArray(node.config.ospfNetworks)
+          ? [...node.config.ospfNetworks]
+          : []
+    };
+  }
+
+  function persistCliContext(context) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.cliContext, JSON.stringify(context));
+      const all = JSON.parse(localStorage.getItem(STORAGE_KEYS.cliContexts) || "{}");
+      all[context.deviceId] = {
+        ...(all[context.deviceId] || {}),
+        ...context
+      };
+      localStorage.setItem(STORAGE_KEYS.cliContexts, JSON.stringify(all));
+    } catch (_error) {
+      // ignore
+    }
+  }
+
+  function openCliModal(node, context) {
+    if (!el.cliBackdrop) return false;
+    if (!window.RouteForgeCLI || typeof window.RouteForgeCLI.setContext !== "function") {
+      return false;
+    }
+
+    if (el.cliTitle) {
+      el.cliTitle.textContent = `${node.label || node.model || node.type} Console`;
+    }
+    if (el.cliMeta) {
+      el.cliMeta.textContent = `${node.type}${node.model ? ` - ${node.model}` : ""} | ${Object.keys(context.interfaces).length} interface${Object.keys(context.interfaces).length === 1 ? "" : "s"}`;
+    }
+    if (el.cliOpenPage) {
+      el.cliOpenPage.href = "cli-simulator.html";
+    }
+
+    el.cliBackdrop.classList.remove("is-hidden");
+    window.RouteForgeCLI.setContext(context, { clear: true, announce: true, focus: true });
+    return true;
+  }
+
+  function closeCliModal() {
+    if (!el.cliBackdrop) return;
+    el.cliBackdrop.classList.add("is-hidden");
   }
 
   function updateLinkTypeButtons() {
@@ -224,7 +355,7 @@
     createNode(type, model, x, y, { label: model || type });
     renderNodes();
     renderConnections();
-    persistCurrentTopology();
+    schedulePersistCurrentTopology();
     setHint(`${model || type} added. ${state.mode === "connect" ? "Click ports to connect." : "Drag to position."}`);
   }
 
@@ -537,6 +668,14 @@
         handleNodeClick(node.id, event);
       });
 
+      div.addEventListener("dblclick", (event) => {
+        if (state.mode === "connect") return;
+        if (event.target.closest("[data-port]")) return;
+        event.preventDefault();
+        event.stopPropagation();
+        openCliForNode(node);
+      });
+
       el.canvas.appendChild(div);
     });
     updateWorkspaceStats();
@@ -629,7 +768,7 @@
     }
     state.connectFrom = null;
     renderNodes();
-    persistCurrentTopology();
+    schedulePersistCurrentTopology();
   }
 
   function handleNodeClick(nodeId, event) {
@@ -712,7 +851,7 @@
       createNode(type, model, x, y, { label: `${model || type}` });
       renderNodes();
       renderConnections();
-      persistCurrentTopology();
+      schedulePersistCurrentTopology();
       setHint(`${model || type} added. ${state.mode === "connect" ? "Click ports to connect." : "Drag to position."}`);
     });
   }
@@ -727,13 +866,14 @@
       node.x = clamp(snapValue(event.clientX - rect.left - state.dragOffset.x), 0, rect.width - NODE_WIDTH);
       node.y = clamp(snapValue(event.clientY - rect.top - state.dragOffset.y), 0, rect.height - NODE_HEIGHT);
 
-      renderNodes();
-      renderConnections();
+      queueRender({ nodes: true, connections: true });
     });
 
     document.addEventListener("mouseup", () => {
       if (state.movingNodeId) {
-        persistCurrentTopology();
+        renderNodes();
+        renderConnections();
+        schedulePersistCurrentTopology(true);
       }
       state.movingNodeId = null;
     });
@@ -749,7 +889,7 @@
       renderNodes();
       renderConnections();
       updateInspector();
-      persistCurrentTopology();
+      schedulePersistCurrentTopology(true);
       setHint("Canvas cleared.");
     });
   }
@@ -824,7 +964,7 @@
     }
     renderNodes();
     renderConnections();
-    persistCurrentTopology();
+    schedulePersistCurrentTopology(true);
   }
 
   function distributeSelected(axis) {
@@ -844,7 +984,7 @@
     });
     renderNodes();
     renderConnections();
-    persistCurrentTopology();
+    schedulePersistCurrentTopology(true);
   }
 
   function bindLayoutControls() {
@@ -916,7 +1056,8 @@
           role: node.config?.role || "",
           notes: node.config?.notes || "",
           routes: node.config?.routes || "",
-          vlans: node.config?.vlans || ""
+          vlans: node.config?.vlans || "",
+          ospfNetworks: Array.isArray(node.config?.ospfNetworks) ? [...node.config.ospfNetworks] : []
         }
       };
     });
@@ -927,7 +1068,7 @@
     renderNodes();
     renderConnections();
     updateInspector();
-    persistCurrentTopology();
+    schedulePersistCurrentTopology(true);
   }
 
   function savedTopologies() {
@@ -1027,7 +1168,7 @@
       renderNodes();
       renderConnections();
       updateInspector();
-      persistCurrentTopology();
+      schedulePersistCurrentTopology(true);
       setHint(`Template "${template.name}" loaded.`);
     });
   }
@@ -1103,7 +1244,7 @@
         if (!node) return;
         node.label = el.inspectorLabel.value.trim() || node.label;
         renderNodes();
-        persistCurrentTopology();
+        schedulePersistCurrentTopology();
       });
     }
 
@@ -1112,7 +1253,7 @@
         const node = getNode(state.inspectorNodeId);
         if (!node) return;
         node.config.hostname = el.inspectorHostname.value.trim();
-        persistCurrentTopology();
+        schedulePersistCurrentTopology();
       });
     }
 
@@ -1121,7 +1262,7 @@
         const node = getNode(state.inspectorNodeId);
         if (!node) return;
         node.config.mgmtIp = el.inspectorMgmtIp.value.trim();
-        persistCurrentTopology();
+        schedulePersistCurrentTopology();
       });
     }
 
@@ -1130,7 +1271,7 @@
         const node = getNode(state.inspectorNodeId);
         if (!node) return;
         node.config.role = el.inspectorRole.value.trim();
-        persistCurrentTopology();
+        schedulePersistCurrentTopology();
       });
     }
 
@@ -1139,7 +1280,7 @@
         const node = getNode(state.inspectorNodeId);
         if (!node) return;
         node.config.notes = el.inspectorNotes.value.trim();
-        persistCurrentTopology();
+        schedulePersistCurrentTopology();
       });
     }
 
@@ -1148,7 +1289,7 @@
         const node = getNode(state.inspectorNodeId);
         if (!node) return;
         node.config.routes = el.inspectorRoutes.value.trim();
-        persistCurrentTopology();
+        schedulePersistCurrentTopology();
       });
     }
 
@@ -1157,7 +1298,7 @@
         const node = getNode(state.inspectorNodeId);
         if (!node) return;
         node.config.vlans = el.inspectorVlans.value.trim();
-        persistCurrentTopology();
+        schedulePersistCurrentTopology();
       });
     }
 
@@ -1181,7 +1322,7 @@
           portItem.up = event.target.value === "up";
         }
         renderNodes();
-        persistCurrentTopology();
+        schedulePersistCurrentTopology();
       });
 
       el.inspectorPorts.addEventListener("change", (event) => {
@@ -1195,7 +1336,7 @@
         if (field === "up") {
           portItem.up = event.target.value === "up";
           renderNodes();
-          persistCurrentTopology();
+          schedulePersistCurrentTopology();
         }
       });
     }
@@ -1233,6 +1374,7 @@
       el.inspectorDelete.addEventListener("click", () => {
         const node = getNode(state.inspectorNodeId);
         if (!node) return;
+        const activeCliDeviceId = window.RouteForgeCLI?.getState?.().context?.deviceId || null;
         state.connections = state.connections.filter((conn) => conn.from !== node.id && conn.to !== node.id);
         state.nodes = state.nodes.filter((item) => item.id !== node.id);
         state.selectedNodeIds.delete(node.id);
@@ -1241,7 +1383,10 @@
         renderNodes();
         renderConnections();
         updateInspector();
-        persistCurrentTopology();
+        schedulePersistCurrentTopology(true);
+        if (activeCliDeviceId === node.id) {
+          closeCliModal();
+        }
         setHint("Device deleted.");
       });
     }
@@ -1281,6 +1426,14 @@
       lines.push(node.config.routes);
     }
 
+    if (Array.isArray(node.config.ospfNetworks) && node.config.ospfNetworks.length) {
+      lines.push("!");
+      lines.push("router ospf 1");
+      node.config.ospfNetworks.forEach((statement) => {
+        lines.push(` network ${statement}`);
+      });
+    }
+
     return lines.join("\n");
   }
 
@@ -1305,43 +1458,15 @@
   }
 
   function openCliForNode(node) {
-    const interfaces = {};
-    node.ports.forEach((p) => {
-      if (p.id.startsWith("g") || p.id.startsWith("fa") || p.id.startsWith("s")) {
-        let ipValue = p.ip || "unassigned";
-        let maskValue = p.mask || "";
-        if (ipValue.includes("/")) {
-          const parts = ipValue.split("/");
-          ipValue = parts[0];
-          maskValue = maskValue || prefixToMask(parts[1]);
-        }
-        interfaces[p.id] = {
-          ip: ipValue,
-          mask: maskValue,
-          up: Boolean(p.up),
-          type: p.id.startsWith("g") ? "GigabitEthernet" : p.id.startsWith("fa") ? "FastEthernet" : "Serial"
-        };
-      }
-    });
+    const context = buildCliContext(node);
+    persistCliContext(context);
 
-    const context = {
-      deviceId: node.id,
-      label: node.label,
-      hostname: node.config.hostname || node.label,
-      type: node.type,
-      interfaces
-    };
-
-    try {
-      localStorage.setItem(STORAGE_KEYS.cliContext, JSON.stringify(context));
-      const all = JSON.parse(localStorage.getItem(STORAGE_KEYS.cliContexts) || "{}");
-      all[node.id] = context;
-      localStorage.setItem(STORAGE_KEYS.cliContexts, JSON.stringify(all));
-    } catch (_error) {
-      // ignore
+    if (!openCliModal(node, context)) {
+      window.open("cli-simulator.html", "_blank");
+      return;
     }
 
-    window.open("cli-simulator.html", "_blank");
+    setHint(`Opened CLI for ${node.label}.`);
   }
 
   function mergeCliContexts() {
@@ -1365,7 +1490,18 @@
         changed = true;
       });
       if (context.hostname) {
-        node.config.hostname = context.hostname;
+        if (node.config.hostname !== context.hostname) {
+          node.config.hostname = context.hostname;
+          changed = true;
+        }
+      }
+      if (Array.isArray(context.ospfNetworks)) {
+        const nextOspf = [...context.ospfNetworks];
+        const currentOspf = Array.isArray(node.config.ospfNetworks) ? node.config.ospfNetworks : [];
+        if (JSON.stringify(currentOspf) !== JSON.stringify(nextOspf)) {
+          node.config.ospfNetworks = nextOspf;
+          changed = true;
+        }
       }
     });
 
@@ -1373,12 +1509,21 @@
       renderNodes();
       renderConnections();
       updateInspector();
-      persistCurrentTopology();
+      schedulePersistCurrentTopology(true);
     }
   }
 
   function bindKeyboardShortcuts() {
     document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && isCliModalOpen()) {
+        closeCliModal();
+        return;
+      }
+
+      if (isCliModalOpen()) {
+        return;
+      }
+
       const active = document.activeElement;
       const isTyping = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA");
       if (isTyping) return;
@@ -1411,7 +1556,7 @@
         renderNodes();
         renderConnections();
         updateInspector();
-        persistCurrentTopology();
+        schedulePersistCurrentTopology(true);
       }
     });
   }
@@ -1430,6 +1575,22 @@
           setHint("Pending connection cleared.");
         }
         clearSelection();
+      }
+    });
+  }
+
+  function bindCliModal() {
+    if (!el.cliBackdrop) return;
+
+    if (el.cliClose) {
+      el.cliClose.addEventListener("click", () => {
+        closeCliModal();
+      });
+    }
+
+    el.cliBackdrop.addEventListener("click", (event) => {
+      if (event.target === el.cliBackdrop) {
+        closeCliModal();
       }
     });
   }
@@ -1457,6 +1618,7 @@
     bindInspector();
     bindKeyboardShortcuts();
     bindCanvasSelectionClear();
+    bindCliModal();
     loadFromStorage();
     mergeCliContexts();
     setLinkType(el.linkType?.value || "ethernet");

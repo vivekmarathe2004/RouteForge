@@ -646,6 +646,10 @@ label {
   box-shadow: 0 16px 28px rgba(47, 51, 71, 0.16);
 }
 
+.device-cli-terminal:hover {
+  transform: none;
+}
+
 .terminal-head {
   background: var(--bg-elevated);
   border-bottom: 1px solid var(--border);
@@ -710,6 +714,106 @@ label {
   border-radius: 0;
   background: var(--bg);
   font-family: "JetBrains Mono", monospace;
+}
+
+.device-cli-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(9, 13, 24, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.device-cli-backdrop.is-hidden {
+  display: none;
+}
+
+.device-cli-modal {
+  width: min(1380px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow: hidden;
+  border: 1px solid rgba(91, 99, 197, 0.16);
+  border-radius: 24px;
+  background: linear-gradient(165deg, rgba(247, 248, 251, 0.98), rgba(230, 233, 242, 0.9));
+  box-shadow: 0 30px 60px rgba(2, 6, 23, 0.34);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.device-cli-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 16px;
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(91, 99, 197, 0.12);
+  background: linear-gradient(180deg, rgba(247, 248, 251, 0.94), rgba(240, 242, 247, 0.9));
+}
+
+.device-cli-copy h2 {
+  margin: 0 0 4px;
+}
+
+.device-cli-copy p:last-child {
+  margin: 0;
+}
+
+.device-cli-head-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.device-cli-layout {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) 360px;
+  gap: 16px;
+  padding: 16px;
+}
+
+.device-cli-terminal {
+  min-height: 0;
+}
+
+.device-cli-terminal .terminal-body {
+  min-height: 420px;
+  max-height: calc(100vh - 230px);
+  background: linear-gradient(180deg, rgba(7, 13, 24, 0.98), rgba(16, 24, 40, 0.96));
+  color: #e9eefb;
+}
+
+.device-cli-terminal .term-prompt {
+  color: #67a6ff;
+}
+
+.device-cli-terminal .term-output {
+  color: rgba(233, 238, 251, 0.92);
+}
+
+.device-cli-terminal .term-input-wrap input {
+  background: #0e1625;
+  color: #e9eefb;
+}
+
+.device-cli-side {
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.device-cli-card {
+  overflow: hidden;
+}
+
+.device-cli-card:hover {
+  transform: none;
 }
 
 .flashcard-wrap {
@@ -1616,6 +1720,14 @@ summary {
 }
 
 @media (max-width: 900px) {
+  .device-cli-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .device-cli-modal {
+    max-height: calc(100vh - 24px);
+  }
+
   .topology-studio,
   .topology-console-bar,
   .topology-actions-grid,
@@ -1638,6 +1750,23 @@ summary {
 }
 
 @media (max-width: 560px) {
+  .device-cli-backdrop {
+    padding: 10px;
+  }
+
+  .device-cli-head,
+  .device-cli-layout {
+    padding: 12px;
+  }
+
+  .device-cli-head {
+    align-items: start;
+  }
+
+  .device-cli-head-actions {
+    justify-content: flex-start;
+  }
+
   .container {
     width: min(1200px, 95vw);
   }

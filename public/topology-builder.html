@@ -441,8 +441,76 @@
     </section>
   </main>
 
+  <div id="topology-cli-backdrop" class="device-cli-backdrop is-hidden">
+    <div class="device-cli-modal" role="dialog" aria-modal="true" aria-labelledby="topology-cli-title">
+      <div class="device-cli-head">
+        <div class="device-cli-copy">
+          <p class="topology-panel-kicker">Device Console</p>
+          <h2 id="topology-cli-title">Cisco Device CLI</h2>
+          <p id="topology-cli-meta" class="muted">Open a node from the canvas to work directly in its console.</p>
+        </div>
+        <div class="device-cli-head-actions">
+          <a id="topology-cli-open-page" class="btn" href="cli-simulator.html" target="_blank" rel="noreferrer">Open Full CLI</a>
+          <button id="topology-cli-close" class="btn" type="button">Close</button>
+        </div>
+      </div>
+
+      <div class="device-cli-layout">
+        <section class="terminal device-cli-terminal">
+          <div class="terminal-head">
+            <div class="term-lights"><span></span><span></span><span></span></div>
+            <div class="terminal-actions">
+              <span id="cli-mode-indicator" class="chip">Mode: User EXEC</span>
+              <button id="cli-reset" type="button">Reset Device</button>
+              <button id="cli-clear" type="button">Clear</button>
+            </div>
+          </div>
+          <div id="cli-output" class="terminal-body"></div>
+          <div class="term-input-wrap">
+            <input id="cli-input" placeholder="Type command and press Enter">
+          </div>
+        </section>
+
+        <aside class="device-cli-side">
+          <section class="card device-cli-card">
+            <h3>Quick Commands</h3>
+            <div id="cli-quick-commands" class="chip-row">
+              <button class="chip quick-cmd" data-command="enable">enable</button>
+              <button class="chip quick-cmd" data-command="show ip interface brief">show ip interface brief</button>
+              <button class="chip quick-cmd" data-command="configure terminal">configure terminal</button>
+              <button class="chip quick-cmd" data-command="interface g0/0">interface g0/0</button>
+              <button class="chip quick-cmd" data-command="ip address 192.168.1.1 255.255.255.0">ip address ...</button>
+              <button class="chip quick-cmd" data-command="no shutdown">no shutdown</button>
+              <button class="chip quick-cmd" data-command="show running-config">show running-config</button>
+            </div>
+            <p class="muted footer-note">Tips: <span class="kbd">Up/Down</span> command history, <span class="kbd">Tab</span> autocomplete, <span class="kbd">Ctrl + L</span> clear terminal, <span class="kbd">Esc</span> close console.</p>
+          </section>
+
+          <section class="card device-cli-card">
+            <h3>Command Search</h3>
+            <div class="search-box">
+              <input id="cli-search" placeholder="Search command or description">
+              <select id="cli-search-mode" style="max-width:220px;">
+                <option value="all">All modes</option>
+                <option value="any">Any mode</option>
+                <option value="user">User EXEC</option>
+                <option value="privileged">Privileged EXEC</option>
+                <option value="config">Global config</option>
+                <option value="interface">Interface config</option>
+                <option value="router_ospf">Router OSPF config</option>
+              </select>
+            </div>
+            <p id="cli-search-count" class="muted" style="margin:8px 0 0;">0 commands</p>
+            <div id="cli-search-results" class="grid" style="margin-top:10px;"></div>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </div>
+
   <script src="js/progress.js" defer></script>
   <script src="js/main.js" defer></script>
+  <script src="js/cli-simulator.js" defer></script>
   <script src="js/topology-builder.js" defer></script>
 </body>
 </html>
