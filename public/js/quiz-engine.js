@@ -93,6 +93,12 @@
       .replaceAll("'", "&#039;");
   }
 
+  function maybeOpenAuth(error) {
+    if (error && /sign in/i.test(String(error.message || "")) && window.RouteForgeAuth) {
+      window.RouteForgeAuth.open("login");
+    }
+  }
+
   function resetBoard() {
     el.question.textContent = "Click Start Quiz to begin.";
     el.options.innerHTML = "";
@@ -273,8 +279,9 @@
           total
         });
       }
-    } catch (_error) {
-      el.result.innerHTML += `<p class="status-bad">Unable to save progress.</p>`;
+    } catch (error) {
+      maybeOpenAuth(error);
+      el.result.innerHTML += `<p class="status-bad">${escapeHtml(error.message || "Unable to save progress.")}</p>`;
     }
 
     el.next.disabled = true;

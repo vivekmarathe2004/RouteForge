@@ -1,6 +1,28 @@
-﻿const express = require("express");
+const express = require("express");
 const fs = require("fs/promises");
 const path = require("path");
+const {
+  blankProgress,
+  upsertProfile,
+  buildProgressSnapshot,
+  saveQuizAttempt,
+  saveSubnetAttempt,
+  saveLabCompletion,
+  saveLabStepProgress,
+  resetLabStepProgress,
+  resetUserProgress
+} = require("./progress-store");
+const {
+  sanitizeUser,
+  setSessionCookies,
+  clearSessionCookies,
+  attachSession,
+  requireAuth
+} = require("./auth");
+const {
+  createSupabaseAdminClient,
+  createSupabaseAuthClient
+} = require("./supabase");
 
 const router = express.Router();
 const dataDir = path.join(__dirname, "..", "data");
@@ -12,19 +34,13 @@ const fileMap = {
   labs: "labs.json",
   flashcards: "flashcards.json",
   cliCommands: "cli-commands.json",
-  subnetQuestions: "subnet-questions.json",
-  progress: "progress.json"
+  subnetQuestions: "subnet-questions.json"
 };
 
 async function readJson(fileName) {
   const fullPath = path.join(dataDir, fileName);
   const raw = await fs.readFile(fullPath, "utf8");
   return JSON.parse(raw.replace(/^\uFEFF/, ""));
-}
-
-async function writeJson(fileName, data) {
-  const fullPath = path.join(dataDir, fileName);
-  await fs.writeFile(fullPath, JSON.stringify(data, null, 2), "utf8");
 }
 
 function clamp(value, min, max) {
@@ -44,7 +60,7 @@ function pickDailyQuestion(questions) {
 }
 
 function recommendTopics(progress, ccnaTopics, ccnpTopics) {
-  const completedLevels = new Set((progress.completedQuizzes || []).map((q) => q.level));
+  const completedLevels = new Set((progress.completedQuizzes || []).map((quiz) => quiz.level));
   const hasAdvanced = completedLevels.has("CCNA advanced") || completedLevels.has("CCNP level");
   const labCount = (progress.completedLabs || []).length;
 
@@ -56,20 +72,147 @@ function recommendTopics(progress, ccnaTopics, ccnpTopics) {
     return ["OSPF", "ACL", "NAT"];
   }
 
-  return ccnpTopics.slice(0, 3).map((topic) => topic.title).concat(ccnaTopics.slice(0, 1).map((t) => t.title));
+  return ccnpTopics.slice(0, 3).map((topic) => topic.title).concat(ccnaTopics.slice(0, 1).map((topic) => topic.title));
 }
+
+function trimText(value, maxLength) {
+  return String(value || "").trim().slice(0, maxLength);
+}
+
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function validateEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function authErrorStatus(error, defaultStatus = 400) {
+  const message = String((error && error.message) || "").toLowerCase();
+  if (message.includes("already") || message.includes("exists") || message.includes("registered")) {
+    return 409;
+  }
+  if (message.includes("invalid login") || message.includes("invalid") || message.includes("password")) {
+    return 401;
+  }
+  return defaultStatus;
+}
+
+router.use(attachSession);
+
+router.post("/auth/register", async (req, res) => {
+  try {
+    const name = trimText(req.body.name, 80);
+    const email = normalizeEmail(req.body.email);
+    const password = String(req.body.password || "");
+
+    if (name.length < 2) {
+      return res.status(400).json({ error: "Name must be at least 2 characters." });
+    }
+
+    if (!validateEmail(email)) {
+      return res.status(400).json({ error: "Enter a valid email address." });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ error: "Password must be at least 8 characters." });
+    }
+
+    const admin = createSupabaseAdminClient();
+    const authClient = createSupabaseAuthClient();
+
+    const { data: created, error: createError } = await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { name }
+    });
+
+    if (createError || !created || !created.user) {
+      return res.status(authErrorStatus(createError, 400)).json({
+        error: (createError && createError.message) || "Failed to create account."
+      });
+    }
+
+    const { data: signInData, error: signInError } = await authClient.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (signInError || !signInData || !signInData.session || !signInData.user) {
+      return res.status(500).json({
+        error: (signInError && signInError.message) || "Account created but sign-in failed."
+      });
+    }
+
+    await upsertProfile(signInData.user);
+    setSessionCookies(res, signInData.session);
+    return res.status(201).json({ user: sanitizeUser(signInData.user) });
+  } catch (error) {
+    console.error("register failed", error);
+    return res.status(500).json({ error: error.message || "Failed to create account." });
+  }
+});
+
+router.post("/auth/login", async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body.email);
+    const password = String(req.body.password || "");
+
+    if (!validateEmail(email) || !password) {
+      return res.status(400).json({ error: "Email and password are required." });
+    }
+
+    const authClient = createSupabaseAuthClient();
+    const { data, error } = await authClient.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error || !data || !data.session || !data.user) {
+      return res.status(authErrorStatus(error, 401)).json({
+        error: (error && error.message) || "Invalid email or password."
+      });
+    }
+
+    await upsertProfile(data.user);
+    setSessionCookies(res, data.session);
+    return res.json({ user: sanitizeUser(data.user) });
+  } catch (error) {
+    console.error("login failed", error);
+    return res.status(500).json({ error: error.message || "Failed to sign in." });
+  }
+});
+
+router.post("/auth/logout", (_req, res) => {
+  clearSessionCookies(res);
+  return res.status(204).send();
+});
+
+router.get("/auth/session", async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not signed in." });
+    }
+
+    await upsertProfile(req.user);
+    return res.json({ user: sanitizeUser(req.user) });
+  } catch (error) {
+    console.error("session lookup failed", error);
+    clearSessionCookies(res);
+    return res.status(401).json({ error: "Session expired." });
+  }
+});
 
 router.get("/topics", async (req, res) => {
   try {
     const track = (req.query.track || "ccna").toLowerCase();
     if (track === "ccnp") {
-      const data = await readJson(fileMap.ccnpTopics);
-      return res.json(data);
+      return res.json(await readJson(fileMap.ccnpTopics));
     }
 
-    const data = await readJson(fileMap.ccnaTopics);
-    return res.json(data);
-  } catch (error) {
+    return res.json(await readJson(fileMap.ccnaTopics));
+  } catch (_error) {
     return res.status(500).json({ error: "Failed to load topics." });
   }
 });
@@ -87,7 +230,7 @@ router.get("/topics/:id", async (req, res) => {
     }
 
     return res.json(topic);
-  } catch (error) {
+  } catch (_error) {
     return res.status(500).json({ error: "Failed to load topic." });
   }
 });
@@ -98,14 +241,11 @@ router.get("/quizzes", async (req, res) => {
     const level = req.query.level;
     const count = Number.parseInt(req.query.count, 10) || 10;
 
-    let pool = questions;
-    if (level) {
-      pool = questions.filter((q) => q.level === level);
-    }
-
+    const pool = level ? questions.filter((question) => question.level === level) : questions;
     const shuffled = [...pool].sort(() => Math.random() - 0.5);
+
     return res.json(shuffled.slice(0, clamp(count, 1, 40)));
-  } catch (error) {
+  } catch (_error) {
     return res.status(500).json({ error: "Failed to load quiz questions." });
   }
 });
@@ -114,26 +254,26 @@ router.get("/quiz-bank", async (req, res) => {
   try {
     const questions = await readJson(fileMap.quizBank);
     const level = req.query.level;
-    const topic = (req.query.topic || "").trim().toLowerCase();
-    const query = (req.query.q || "").trim().toLowerCase();
+    const topic = trimText(req.query.topic, 120).toLowerCase();
+    const query = trimText(req.query.q, 120).toLowerCase();
     const page = Number.parseInt(req.query.page, 10) || 1;
     const pageSize = clamp(Number.parseInt(req.query.pageSize, 10) || 20, 5, 50);
 
     let pool = questions;
     if (level && level !== "all") {
-      pool = pool.filter((q) => q.level === level);
+      pool = pool.filter((question) => question.level === level);
     }
 
     if (topic) {
-      pool = pool.filter((q) => String(q.topic || "").toLowerCase().includes(topic));
+      pool = pool.filter((question) => String(question.topic || "").toLowerCase().includes(topic));
     }
 
     if (query) {
-      pool = pool.filter((q) => {
+      pool = pool.filter((question) => {
         return (
-          String(q.question || "").toLowerCase().includes(query) ||
-          String(q.explanation || "").toLowerCase().includes(query) ||
-          String(q.topic || "").toLowerCase().includes(query)
+          String(question.question || "").toLowerCase().includes(query) ||
+          String(question.explanation || "").toLowerCase().includes(query) ||
+          String(question.topic || "").toLowerCase().includes(query)
         );
       });
     }
@@ -141,19 +281,20 @@ router.get("/quiz-bank", async (req, res) => {
     const total = pool.length;
     const safePage = Math.max(1, page);
     const start = (safePage - 1) * pageSize;
-    const items = pool.slice(start, start + pageSize);
 
-    return res.json({ total, items });
-  } catch (error) {
+    return res.json({
+      total,
+      items: pool.slice(start, start + pageSize)
+    });
+  } catch (_error) {
     return res.status(500).json({ error: "Failed to load question bank." });
   }
 });
 
-router.get("/daily-question", async (req, res) => {
+router.get("/daily-question", async (_req, res) => {
   try {
-    const questions = await readJson(fileMap.quizBank);
-    return res.json(pickDailyQuestion(questions));
-  } catch (error) {
+    return res.json(pickDailyQuestion(await readJson(fileMap.quizBank)));
+  } catch (_error) {
     return res.status(500).json({ error: "Failed to load daily question." });
   }
 });
@@ -162,30 +303,24 @@ router.get("/subnet-questions", async (req, res) => {
   try {
     const questions = await readJson(fileMap.subnetQuestions);
     const difficulty = req.query.difficulty;
-    if (!difficulty) {
-      return res.json(questions);
-    }
-
-    return res.json(questions.filter((q) => q.difficulty === difficulty));
-  } catch (error) {
+    return res.json(difficulty ? questions.filter((item) => item.difficulty === difficulty) : questions);
+  } catch (_error) {
     return res.status(500).json({ error: "Failed to load subnet questions." });
   }
 });
 
-router.get("/labs", async (req, res) => {
+router.get("/labs", async (_req, res) => {
   try {
-    const labs = await readJson(fileMap.labs);
-    return res.json(labs);
-  } catch (error) {
+    return res.json(await readJson(fileMap.labs));
+  } catch (_error) {
     return res.status(500).json({ error: "Failed to load labs." });
   }
 });
 
-router.get("/flashcards", async (req, res) => {
+router.get("/flashcards", async (_req, res) => {
   try {
-    const cards = await readJson(fileMap.flashcards);
-    return res.json(cards);
-  } catch (error) {
+    return res.json(await readJson(fileMap.flashcards));
+  } catch (_error) {
     return res.status(500).json({ error: "Failed to load flashcards." });
   }
 });
@@ -193,159 +328,147 @@ router.get("/flashcards", async (req, res) => {
 router.get("/cli-commands", async (req, res) => {
   try {
     const commands = await readJson(fileMap.cliCommands);
-    const query = (req.query.q || "").trim().toLowerCase();
+    const query = trimText(req.query.q, 120).toLowerCase();
 
     if (!query) {
       return res.json(commands);
     }
 
-    const filtered = commands.commands.filter((entry) => {
-      return (
-        entry.command.toLowerCase().includes(query) ||
-        entry.description.toLowerCase().includes(query)
-      );
+    return res.json({
+      commands: commands.commands.filter((entry) => {
+        return entry.command.toLowerCase().includes(query) || entry.description.toLowerCase().includes(query);
+      })
     });
-
-    return res.json({ commands: filtered });
-  } catch (error) {
+  } catch (_error) {
     return res.status(500).json({ error: "Failed to load CLI commands." });
   }
 });
 
-router.get("/progress", async (_req, res) => {
+router.get("/progress", async (req, res) => {
   try {
-    const progress = await readJson(fileMap.progress);
-    return res.json(progress);
+    return res.json(req.user ? await buildProgressSnapshot(req.user.id) : blankProgress());
   } catch (error) {
-    return res.status(500).json({ error: "Failed to load progress." });
+    console.error("progress load failed", error);
+    return res.status(500).json({ error: error.message || "Failed to load progress." });
   }
 });
 
-router.post("/progress/quiz", async (req, res) => {
+router.post("/progress/quiz", requireAuth, async (req, res) => {
   try {
-    const { level, score, total } = req.body;
+    const level = trimText(req.body.level, 80);
+    const score = Number(req.body.score);
+    const total = Number(req.body.total);
 
     if (!level || !Number.isFinite(score) || !Number.isFinite(total) || total <= 0) {
       return res.status(400).json({ error: "Invalid quiz payload." });
     }
 
-    const progress = await readJson(fileMap.progress);
-    const percent = Math.round((score / total) * 100);
-    const record = {
-      level,
-      score,
-      total,
-      percent,
-      date: new Date().toISOString()
-    };
-
-    progress.completedQuizzes = progress.completedQuizzes || [];
-    progress.recentQuizScores = progress.recentQuizScores || [];
-
-    progress.completedQuizzes.push(record);
-    progress.recentQuizScores = [record, ...progress.recentQuizScores].slice(0, 8);
-    progress.bestScore = Math.max(progress.bestScore || 0, percent);
-
-    await writeJson(fileMap.progress, progress);
-    return res.json(progress);
+    return res.json(await saveQuizAttempt(req.user.id, { level, score, total }));
   } catch (error) {
-    return res.status(500).json({ error: "Failed to save quiz progress." });
+    console.error("quiz save failed", error);
+    return res.status(500).json({ error: error.message || "Failed to save quiz progress." });
   }
 });
 
-router.post("/progress/subnet", async (req, res) => {
+router.post("/progress/subnet", requireAuth, async (req, res) => {
   try {
-    const { mode, score, total, timeSeconds } = req.body;
+    const mode = trimText(req.body.mode, 40);
+    const difficulty = trimText(req.body.difficulty, 40);
+    const score = Number(req.body.score);
+    const total = Number(req.body.total);
+    const timeSeconds = req.body.timeSeconds === null || req.body.timeSeconds === undefined
+      ? null
+      : Number(req.body.timeSeconds);
 
-    if (!mode || !Number.isFinite(score) || !Number.isFinite(total)) {
+    if (!mode || !Number.isFinite(score) || !Number.isFinite(total) || total < 0) {
       return res.status(400).json({ error: "Invalid subnet payload." });
     }
 
-    const progress = await readJson(fileMap.progress);
-    progress.subnetResults = progress.subnetResults || [];
-
-    progress.subnetResults.unshift({
+    return res.json(await saveSubnetAttempt(req.user.id, {
       mode,
+      difficulty,
       score,
       total,
-      timeSeconds: Number.isFinite(timeSeconds) ? timeSeconds : null,
-      date: new Date().toISOString()
-    });
-    progress.subnetResults = progress.subnetResults.slice(0, 12);
-
-    await writeJson(fileMap.progress, progress);
-    return res.json(progress);
+      timeSeconds
+    }));
   } catch (error) {
-    return res.status(500).json({ error: "Failed to save subnet progress." });
+    console.error("subnet save failed", error);
+    return res.status(500).json({ error: error.message || "Failed to save subnet progress." });
   }
 });
 
-router.post("/progress/lab", async (req, res) => {
+router.post("/progress/lab", requireAuth, async (req, res) => {
   try {
-    const { labId } = req.body;
+    const labId = trimText(req.body.labId, 120);
     if (!labId) {
       return res.status(400).json({ error: "labId is required." });
     }
 
-    const progress = await readJson(fileMap.progress);
-    progress.completedLabs = progress.completedLabs || [];
+    return res.json(await saveLabCompletion(req.user.id, labId));
+  } catch (error) {
+    console.error("lab completion save failed", error);
+    return res.status(500).json({ error: error.message || "Failed to save lab progress." });
+  }
+});
 
-    if (!progress.completedLabs.includes(labId)) {
-      progress.completedLabs.push(labId);
+router.post("/progress/lab-steps", requireAuth, async (req, res) => {
+  try {
+    const labId = trimText(req.body.labId, 120);
+    const steps = Array.isArray(req.body.steps) ? req.body.steps.map((step) => Boolean(step)) : null;
+
+    if (!labId || !steps) {
+      return res.status(400).json({ error: "labId and steps are required." });
     }
 
-    await writeJson(fileMap.progress, progress);
-    return res.json(progress);
+    return res.json(await saveLabStepProgress(req.user.id, labId, steps));
   } catch (error) {
-    return res.status(500).json({ error: "Failed to save lab progress." });
+    console.error("lab step save failed", error);
+    return res.status(500).json({ error: error.message || "Failed to save lab step progress." });
   }
 });
 
-router.post("/progress/reset", async (_req, res) => {
+router.post("/progress/lab-steps/reset", requireAuth, async (req, res) => {
   try {
-    const blank = {
-      completedQuizzes: [],
-      bestScore: 0,
-      subnetResults: [],
-      completedLabs: [],
-      recentQuizScores: []
-    };
-
-    await writeJson(fileMap.progress, blank);
-    return res.json(blank);
+    return res.json(await resetLabStepProgress(req.user.id));
   } catch (error) {
-    return res.status(500).json({ error: "Failed to reset progress." });
+    console.error("lab step reset failed", error);
+    return res.status(500).json({ error: error.message || "Failed to reset lab step progress." });
   }
 });
 
-router.get("/dashboard", async (_req, res) => {
+router.post("/progress/reset", requireAuth, async (req, res) => {
+  try {
+    return res.json(await resetUserProgress(req.user.id));
+  } catch (error) {
+    console.error("progress reset failed", error);
+    return res.status(500).json({ error: error.message || "Failed to reset progress." });
+  }
+});
+
+router.get("/dashboard", async (req, res) => {
   try {
     const [progress, quizBank, ccnaTopics, ccnpTopics] = await Promise.all([
-      readJson(fileMap.progress),
+      req.user ? buildProgressSnapshot(req.user.id) : Promise.resolve(blankProgress()),
       readJson(fileMap.quizBank),
       readJson(fileMap.ccnaTopics),
       readJson(fileMap.ccnpTopics)
     ]);
 
-    const totalQuizzes = (progress.completedQuizzes || []).length;
-    const labsDone = (progress.completedLabs || []).length;
-    const subnetAttempts = (progress.subnetResults || []).length;
-
-    const studyProgress = {
-      quizzesTaken: totalQuizzes,
-      labsDone,
-      subnetAttempts,
-      bestQuizScore: progress.bestScore || 0
-    };
-
     return res.json({
-      studyProgress,
+      studyProgress: {
+        quizzesTaken: (progress.completedQuizzes || []).length,
+        labsDone: (progress.completedLabs || []).length,
+        subnetAttempts: (progress.subnetResults || []).length,
+        bestQuizScore: progress.bestScore || 0
+      },
       dailyQuestion: pickDailyQuestion(quizBank),
       recentQuizScores: progress.recentQuizScores || [],
-      recommendedTopics: recommendTopics(progress, ccnaTopics, ccnpTopics)
+      recommendedTopics: recommendTopics(progress, ccnaTopics, ccnpTopics),
+      user: req.user ? sanitizeUser(req.user) : null
     });
   } catch (error) {
-    return res.status(500).json({ error: "Failed to load dashboard." });
+    console.error("dashboard failed", error);
+    return res.status(500).json({ error: error.message || "Failed to load dashboard." });
   }
 });
 

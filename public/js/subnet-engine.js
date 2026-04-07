@@ -102,6 +102,12 @@
     result: document.getElementById("subnet-result")
   };
 
+  function maybeOpenAuth(error) {
+    if (error && /sign in/i.test(String(error.message || "")) && window.RouteForgeAuth) {
+      window.RouteForgeAuth.open("login");
+    }
+  }
+
   function randomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
@@ -384,13 +390,15 @@
       if (window.ProgressAPI) {
         await window.ProgressAPI.saveSubnetResult({
           mode: state.mode,
+          difficulty: state.difficulty,
           score: state.score,
           total: state.asked,
           timeSeconds: state.totalSeconds
         });
       }
-    } catch (_error) {
-      el.result.innerHTML += "<p class='status-bad'>Unable to save subnet result.</p>";
+    } catch (error) {
+      maybeOpenAuth(error);
+      el.result.innerHTML += `<p class='status-bad'>${error.message || "Unable to save subnet result."}</p>`;
     }
   }
 

@@ -13,7 +13,10 @@
     "node": ">=18"
   },
   "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.6.1",
     "express": "^4.19.2",
-    "serverless-http": "^3.2.0"
+    "serverless-http": "^3.2.0",
+    "@supabase/supabase-js": "^2.57.0"
   }
 }

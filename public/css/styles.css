@@ -69,6 +69,20 @@ a {
   flex-wrap: wrap;
 }
 
+.nav-auth {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.auth-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .nav-links a {
   font-size: 0.9rem;
   color: var(--text-muted);
@@ -218,6 +232,12 @@ a {
   transform: translateY(-1px);
 }
 
+.chip.is-active,
+.auth-chip {
+  background: rgba(91, 99, 197, 0.18);
+  border-color: rgba(91, 99, 197, 0.4);
+}
+
 .chip.tag-filter {
   cursor: pointer;
 }
@@ -269,6 +289,41 @@ button:disabled {
   gap: 10px;
   flex-wrap: wrap;
   margin: 12px 0;
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 12px;
+  flex-wrap: wrap;
+}
+
+.auth-form {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(47, 51, 71, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 50;
+}
+
+.auth-modal-backdrop.is-hidden {
+  display: none;
+}
+
+.auth-modal {
+  width: min(460px, 100%);
+  background: var(--bg);
+}
+
+.auth-callout {
+  margin-top: 14px;
 }
 
 input,

@@ -7,6 +7,7 @@
     labs: [],
     filteredLabs: [],
     completedLabs: new Set(),
+    syncedStepProgress: {},
     search: "",
     difficulty: "all",
     category: "all",
@@ -66,6 +67,11 @@
   }
 
   function getLabStepProgress(lab) {
+    const synced = state.syncedStepProgress[lab.id];
+    if (Array.isArray(synced)) {
+      return lab.steps.map((_, index) => Boolean(synced[index]));
+    }
+
     const key = localStepKey(lab.id);
 
     try {
@@ -115,6 +121,12 @@
   function showFeedback(message, isError = false) {
     if (!el.feedback) return;
     el.feedback.innerHTML = `<p class="${isError ? "status-bad" : "status-good"}">${escapeHtml(message)}</p>`;
+  }
+
+  function maybeOpenAuth(error) {
+    if (error && /sign in/i.test(String(error.message || "")) && window.RouteForgeAuth) {
+      window.RouteForgeAuth.open("login");
+    }
   }
 
   function clearFeedback() {
@@ -418,11 +430,13 @@
     }
 
     try {
-      await window.ProgressAPI.saveLabCompletion({ labId });
-      state.completedLabs.add(labId);
+      const progress = await window.ProgressAPI.saveLabCompletion({ labId });
+      state.completedLabs = new Set((progress && progress.completedLabs) || []);
+      state.syncedStepProgress = (progress && progress.labStepProgress) || {};
       showFeedback("Lab marked complete.");
       renderLabs();
     } catch (error) {
+      maybeOpenAuth(error);
       showFeedback(error.message || "Failed to mark lab complete.", true);
     }
   }
@@ -480,7 +494,9 @@
 
     const progress = new Array(lab.steps.length).fill(true);
     saveLabStepProgress(labId, progress);
+    state.syncedStepProgress[labId] = [...progress];
     showFeedback("Auto-validation passed. Steps marked complete.");
+    void syncStepProgress(labId, progress);
     renderLabs();
   }
 
@@ -497,6 +513,21 @@
     showFeedback("Embedded CLI is unavailable. Use the CLI page or copy commands.", true);
   }
 
+  async function syncStepProgress(labId, progress) {
+    if (!window.ProgressAPI || !window.ProgressAPI.isAuthenticated || !window.ProgressAPI.isAuthenticated()) {
+      return;
+    }
+
+    try {
+      const snapshot = await window.ProgressAPI.saveLabStepProgress({ labId, steps: progress });
+      state.syncedStepProgress = (snapshot && snapshot.labStepProgress) || {};
+      state.completedLabs = new Set((snapshot && snapshot.completedLabs) || []);
+    } catch (error) {
+      maybeOpenAuth(error);
+      showFeedback(error.message || "Failed to sync lab step progress.", true);
+    }
+  }
+
   function toggleStep(labId, stepIndex, checked) {
     const lab = findLabById(labId);
     if (!lab) return;
@@ -504,6 +535,7 @@
     const progress = getLabStepProgress(lab);
     progress[stepIndex] = checked;
     saveLabStepProgress(labId, progress);
+    state.syncedStepProgress[labId] = [...progress];
 
     clearFeedback();
 
@@ -511,6 +543,7 @@
       showFeedback("All steps checked. Use 'Mark Lab Complete' to persist completion.");
     }
 
+    void syncStepProgress(labId, progress);
     renderLabs();
   }
 
@@ -547,9 +580,24 @@
       renderLabs();
     });
 
-    el.resetSteps.addEventListener("click", () => {
+    el.resetSteps.addEventListener("click", async () => {
       clearAllLocalStepProgress();
-      showFeedback("Local step progress has been reset.");
+
+      if (window.ProgressAPI && window.ProgressAPI.isAuthenticated && window.ProgressAPI.isAuthenticated()) {
+        try {
+          const snapshot = await window.ProgressAPI.resetLabStepProgress();
+          state.syncedStepProgress = (snapshot && snapshot.labStepProgress) || {};
+          state.completedLabs = new Set((snapshot && snapshot.completedLabs) || []);
+          showFeedback("Synced lab step progress has been reset.");
+        } catch (error) {
+          maybeOpenAuth(error);
+          showFeedback(error.message || "Failed to reset synced lab step progress.", true);
+        }
+      } else {
+        state.syncedStepProgress = {};
+        showFeedback("Local step progress has been reset.");
+      }
+
       renderLabs();
     });
 
@@ -656,6 +704,7 @@
 
       state.labs = await labsRes.json();
       state.completedLabs = new Set((progress && progress.completedLabs) || []);
+      state.syncedStepProgress = (progress && progress.labStepProgress) || {};
 
       if (el.pageSize) {
         const initialSize = Number(el.pageSize.value);
