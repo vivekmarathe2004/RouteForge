@@ -135,6 +135,35 @@
     ui.status.textContent = "";
   }
 
+  function bindAuthNavButtons() {
+    const loginButton = document.getElementById("auth-login-button");
+    const registerButton = document.getElementById("auth-register-button");
+    const logoutButton = document.getElementById("auth-logout-button");
+
+    if (loginButton && loginButton.dataset.bound !== "true") {
+      loginButton.dataset.bound = "true";
+      loginButton.addEventListener("click", () => openAuthModal("login"));
+    }
+
+    if (registerButton && registerButton.dataset.bound !== "true") {
+      registerButton.dataset.bound = "true";
+      registerButton.addEventListener("click", () => openAuthModal("register"));
+    }
+
+    if (logoutButton && logoutButton.dataset.bound !== "true") {
+      logoutButton.dataset.bound = "true";
+      logoutButton.addEventListener("click", async () => {
+        if (!window.ProgressAPI) return;
+        try {
+          await window.ProgressAPI.logout();
+          window.location.reload();
+        } catch (_error) {
+          window.location.reload();
+        }
+      });
+    }
+  }
+
   async function handleAuthSubmit(event) {
     event.preventDefault();
     if (authSubmitting || !window.ProgressAPI) return;
@@ -181,16 +210,7 @@
           <button type="button" id="auth-logout-button">Sign Out</button>
         </div>
       `;
-
-      navAuth.querySelector("#auth-logout-button").addEventListener("click", async () => {
-        if (!window.ProgressAPI) return;
-        try {
-          await window.ProgressAPI.logout();
-          window.location.reload();
-        } catch (_error) {
-          window.location.reload();
-        }
-      });
+      bindAuthNavButtons();
       return;
     }
 
@@ -201,9 +221,7 @@
         <button type="button" id="auth-register-button" class="btn btn-primary">Create Account</button>
       </div>
     `;
-
-    navAuth.querySelector("#auth-login-button").addEventListener("click", () => openAuthModal("login"));
-    navAuth.querySelector("#auth-register-button").addEventListener("click", () => openAuthModal("register"));
+    bindAuthNavButtons();
   }
 
   function renderDashboardAuthNotice(session) {
@@ -353,10 +371,15 @@
     ensureAuthUi();
     switchAuthMode("login");
     bindShortcuts();
+    bindAuthNavButtons();
 
     let session = null;
     if (window.ProgressAPI) {
-      session = await window.ProgressAPI.fetchSession();
+      try {
+        session = await window.ProgressAPI.fetchSession();
+      } catch (_error) {
+        session = null;
+      }
       renderAuthNav(session);
       renderDashboardAuthNotice(session);
       window.ProgressAPI.onAuthChange((nextSession) => {
