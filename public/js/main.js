@@ -32,61 +32,67 @@
 
   function ensureAuthUi() {
     const nav = document.querySelector(".nav");
-    if (!nav || document.getElementById("nav-auth")) return;
+    if (!nav) return;
 
-    const navAuth = document.createElement("div");
-    navAuth.id = "nav-auth";
-    navAuth.className = "nav-auth";
-    nav.appendChild(navAuth);
+    let navAuth = document.getElementById("nav-auth");
+    if (!navAuth) {
+      navAuth = document.createElement("div");
+      navAuth.id = "nav-auth";
+      navAuth.className = "nav-auth";
+      nav.appendChild(navAuth);
+    }
 
-    const backdrop = document.createElement("div");
-    backdrop.id = "auth-modal-backdrop";
-    backdrop.className = "auth-modal-backdrop is-hidden";
-    backdrop.innerHTML = `
-      <div class="auth-modal card" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
-        <div class="lab-card-top">
-          <div>
-            <h3 id="auth-modal-title">Sign in</h3>
-            <p id="auth-modal-subtitle" class="muted">Sync your progress across devices and deployments.</p>
+    let backdrop = document.getElementById("auth-modal-backdrop");
+    if (!backdrop) {
+      backdrop = document.createElement("div");
+      backdrop.id = "auth-modal-backdrop";
+      backdrop.className = "auth-modal-backdrop is-hidden";
+      backdrop.innerHTML = `
+        <div class="auth-modal card" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+          <div class="lab-card-top">
+            <div>
+              <h3 id="auth-modal-title">Sign in</h3>
+              <p id="auth-modal-subtitle" class="muted">Sync your progress across devices and deployments.</p>
+            </div>
+            <button type="button" data-auth-close>Close</button>
           </div>
-          <button type="button" data-auth-close>Close</button>
+          <div class="auth-tabs">
+            <button type="button" id="auth-tab-login" class="chip is-active" data-auth-mode="login">Sign In</button>
+            <button type="button" id="auth-tab-register" class="chip" data-auth-mode="register">Create Account</button>
+          </div>
+          <form id="auth-form" class="auth-form">
+            <div id="auth-name-row">
+              <label for="auth-name">Name</label>
+              <input id="auth-name" autocomplete="name" maxlength="80" placeholder="Your name">
+            </div>
+            <div>
+              <label for="auth-email">Email</label>
+              <input id="auth-email" type="email" autocomplete="email" maxlength="255" placeholder="you@example.com" required>
+            </div>
+            <div>
+              <label for="auth-password">Password</label>
+              <input id="auth-password" type="password" autocomplete="current-password" minlength="8" placeholder="At least 8 characters" required>
+            </div>
+            <div id="auth-status" class="muted" aria-live="polite"></div>
+            <div class="toolbar" style="margin-bottom:0;">
+              <button type="submit" id="auth-submit" class="btn btn-primary">Sign In</button>
+            </div>
+          </form>
         </div>
-        <div class="auth-tabs">
-          <button type="button" id="auth-tab-login" class="chip is-active" data-auth-mode="login">Sign In</button>
-          <button type="button" id="auth-tab-register" class="chip" data-auth-mode="register">Create Account</button>
-        </div>
-        <form id="auth-form" class="auth-form">
-          <div id="auth-name-row">
-            <label for="auth-name">Name</label>
-            <input id="auth-name" autocomplete="name" maxlength="80" placeholder="Your name">
-          </div>
-          <div>
-            <label for="auth-email">Email</label>
-            <input id="auth-email" type="email" autocomplete="email" maxlength="255" placeholder="you@example.com" required>
-          </div>
-          <div>
-            <label for="auth-password">Password</label>
-            <input id="auth-password" type="password" autocomplete="current-password" minlength="8" placeholder="At least 8 characters" required>
-          </div>
-          <div id="auth-status" class="muted" aria-live="polite"></div>
-          <div class="toolbar" style="margin-bottom:0;">
-            <button type="submit" id="auth-submit" class="btn btn-primary">Sign In</button>
-          </div>
-        </form>
-      </div>
-    `;
-    document.body.appendChild(backdrop);
+      `;
+      document.body.appendChild(backdrop);
 
-    backdrop.addEventListener("click", (event) => {
-      if (event.target === backdrop || event.target.hasAttribute("data-auth-close")) {
-        closeAuthModal();
-      }
-    });
+      backdrop.addEventListener("click", (event) => {
+        if (event.target === backdrop || event.target.hasAttribute("data-auth-close")) {
+          closeAuthModal();
+        }
+      });
 
-    const { form, loginTab, registerTab } = authElements();
-    form.addEventListener("submit", handleAuthSubmit);
-    loginTab.addEventListener("click", () => switchAuthMode("login"));
-    registerTab.addEventListener("click", () => switchAuthMode("register"));
+      const { form, loginTab, registerTab } = authElements();
+      form.addEventListener("submit", handleAuthSubmit);
+      loginTab.addEventListener("click", () => switchAuthMode("login"));
+      registerTab.addEventListener("click", () => switchAuthMode("register"));
+    }
   }
 
   function switchAuthMode(nextMode) {
