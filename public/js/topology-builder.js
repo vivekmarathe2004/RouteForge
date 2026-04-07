@@ -2,17 +2,17 @@
 (function () {
   if (document.body.dataset.page !== "topology") return;
 
-  const icons = {
-    Router: "[R]",
-    Switch: "[SW]",
-    PC: "[PC]",
-    Server: "[SV]",
-    Firewall: "[FW]",
-    AccessPoint: "[AP]",
-    Cloud: "[CL]",
-    Laptop: "[LT]",
-    Phone: "[PH]",
-    Printer: "[PR]"
+  const DEVICE_META = {
+    Router: { short: "RTR", family: "router", category: "routers" },
+    Switch: { short: "SW", family: "switch", category: "switches" },
+    PC: { short: "PC", family: "endpoint", category: "endpoints" },
+    Server: { short: "SV", family: "endpoint", category: "endpoints" },
+    Firewall: { short: "FW", family: "firewall", category: "security" },
+    AccessPoint: { short: "AP", family: "wireless", category: "security" },
+    Cloud: { short: "WAN", family: "cloud", category: "wan" },
+    Laptop: { short: "LT", family: "endpoint", category: "endpoints" },
+    Phone: { short: "PH", family: "endpoint", category: "endpoints" },
+    Printer: { short: "PR", family: "endpoint", category: "endpoints" }
   };
 
   const STORAGE_KEYS = {
@@ -21,6 +21,9 @@
     cliContexts: "routeforge.cli.contexts",
     cliContext: "routeforge.cli.context"
   };
+
+  const NODE_WIDTH = 128;
+  const NODE_HEIGHT = 96;
 
   const state = {
     nodes: [],
@@ -34,7 +37,9 @@
     linkType: "ethernet",
     snapToGrid: true,
     gridSize: 20,
-    inspectorNodeId: null
+    inspectorNodeId: null,
+    paletteCategory: "all",
+    searchTerm: ""
   };
 
   const el = {
@@ -58,6 +63,19 @@
     loadBtn: document.getElementById("topology-load"),
     exportBtn: document.getElementById("topology-export"),
     importInput: document.getElementById("topology-import"),
+    emptyState: document.getElementById("topology-empty-state"),
+    deviceCount: document.getElementById("topology-device-count"),
+    linkCount: document.getElementById("topology-link-count"),
+    selectedCount: document.getElementById("topology-selected-count"),
+    modeLabel: document.getElementById("topology-mode-label"),
+    cableLabel: document.getElementById("topology-cable-label"),
+    cableButtons: Array.from(document.querySelectorAll("[data-link-type]")),
+    filterButtons: Array.from(document.querySelectorAll(".topology-filter")),
+    paletteGroups: Array.from(document.querySelectorAll(".topology-palette-group")),
+    paletteItems: Array.from(document.querySelectorAll(".device-item")),
+    deviceSearch: document.getElementById("topology-device-search"),
+    inspectorTitle: document.getElementById("inspector-device-title"),
+    inspectorMeta: document.getElementById("inspector-device-meta"),
     inspectorEmpty: document.getElementById("inspector-empty"),
     inspectorPanel: document.getElementById("inspector-panel"),
     inspectorOpenCli: document.getElementById("inspector-open-cli"),
@@ -158,6 +176,74 @@
     if (el.hint) el.hint.textContent = text;
   }
 
+  function deviceMeta(type) {
+    return DEVICE_META[type] || { short: "DEV", family: "endpoint", category: "all" };
+  }
+
+  function updateWorkspaceStats() {
+    if (el.deviceCount) el.deviceCount.textContent = String(state.nodes.length);
+    if (el.linkCount) el.linkCount.textContent = String(state.connections.length);
+    if (el.selectedCount) el.selectedCount.textContent = String(state.selectedNodeIds.size);
+    if (el.modeLabel) el.modeLabel.textContent = state.mode === "connect" ? "Connect" : "Move";
+    if (el.cableLabel) {
+      const value = state.linkType || "ethernet";
+      el.cableLabel.textContent = value.charAt(0).toUpperCase() + value.slice(1);
+    }
+    if (el.emptyState) {
+      el.emptyState.classList.toggle("is-hidden", state.nodes.length > 0);
+    }
+  }
+
+  function updateLinkTypeButtons() {
+    el.cableButtons.forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.linkType === state.linkType);
+    });
+    if (el.linkType && el.linkType.value !== state.linkType) {
+      el.linkType.value = state.linkType;
+    }
+    updateWorkspaceStats();
+  }
+
+  function nextPlacement() {
+    const rect = canvasRect();
+    const margin = 32;
+    const columnWidth = 148;
+    const rowHeight = 112;
+    const perRow = Math.max(1, Math.floor((rect.width - margin * 2) / columnWidth));
+    const index = state.nodes.length;
+    const x = margin + (index % perRow) * columnWidth;
+    const y = margin + Math.floor(index / perRow) * rowHeight;
+    return {
+      x: clamp(snapValue(x), 0, Math.max(0, rect.width - NODE_WIDTH)),
+      y: clamp(snapValue(y), 0, Math.max(0, rect.height - NODE_HEIGHT))
+    };
+  }
+
+  function addDeviceFromPalette(type, model) {
+    const { x, y } = nextPlacement();
+    createNode(type, model, x, y, { label: model || type });
+    renderNodes();
+    renderConnections();
+    persistCurrentTopology();
+    setHint(`${model || type} added. ${state.mode === "connect" ? "Click ports to connect." : "Drag to position."}`);
+  }
+
+  function applyPaletteFilters() {
+    const query = state.searchTerm.trim().toLowerCase();
+
+    el.paletteItems.forEach((item) => {
+      const categoryMatches = state.paletteCategory === "all" || item.dataset.category === state.paletteCategory;
+      const haystack = `${item.dataset.device || ""} ${item.dataset.model || ""} ${item.textContent || ""}`.toLowerCase();
+      const searchMatches = !query || haystack.includes(query);
+      item.hidden = !(categoryMatches && searchMatches);
+    });
+
+    el.paletteGroups.forEach((group) => {
+      const visibleItems = Array.from(group.querySelectorAll(".device-item")).some((item) => !item.hidden);
+      group.hidden = !visibleItems;
+    });
+  }
+
   function port(id, media, label) {
     return {
       id,
@@ -246,7 +332,7 @@
   }
 
   function nodeCenter(node) {
-    return { x: node.x + 55, y: node.y + 30 };
+    return { x: node.x + NODE_WIDTH / 2, y: node.y + NODE_HEIGHT / 2 - 8 };
   }
 
   function isPortUsed(nodeId, portId) {
@@ -259,7 +345,7 @@
   function isPortBlocked(nodeId, portId, cableType) {
     const node = getNode(nodeId);
     const portItem = getPort(node, portId);
-    if (cableType === "wireless" && portItem && portItem.media === "wireless") {
+    if (portAllowsMultipleLinks(node, portId, cableType)) {
       return false;
     }
     return isPortUsed(nodeId, portId);
@@ -284,6 +370,84 @@
     return portA.media === "ethernet" && portB.media === "ethernet";
   }
 
+  function portSupportsCable(portItem, cableType) {
+    if (!portItem) return false;
+    if (cableType === "wireless") return portItem.media === "wireless";
+    if (cableType === "serial") return portItem.media === "serial";
+    return portItem.media === "ethernet";
+  }
+
+  function portAllowsMultipleLinks(node, portId, cableType) {
+    const portItem = getPort(node, portId);
+    if (!node || !portItem) return false;
+    return cableType === "wireless" && node.type === "AccessPoint" && portItem.media === "wireless";
+  }
+
+  function connectionExists(nodeAId, portAId, nodeBId, portBId) {
+    return state.connections.some((conn) => {
+      const forward = conn.from === nodeAId && conn.fromPort === portAId && conn.to === nodeBId && conn.toPort === portBId;
+      const reverse = conn.from === nodeBId && conn.fromPort === portBId && conn.to === nodeAId && conn.toPort === portAId;
+      return forward || reverse;
+    });
+  }
+
+  function validateConnection(nodeA, portAId, nodeB, portBId, cableType) {
+    if (!nodeA || !nodeB) {
+      return { ok: false, message: "Both devices must exist before creating a connection." };
+    }
+
+    const portA = getPort(nodeA, portAId);
+    const portB = getPort(nodeB, portBId);
+    if (!portA || !portB) {
+      return { ok: false, message: "One of the selected ports could not be found." };
+    }
+
+    if (!portSupportsCable(portA, cableType) || !portSupportsCable(portB, cableType)) {
+      return { ok: false, message: "Cable type not compatible with selected ports." };
+    }
+
+    if (nodeA.id === nodeB.id) {
+      return { ok: false, message: "Choose a port on a different device to create a connection." };
+    }
+
+    if (!deviceAllowsCable(nodeA, nodeB, cableType)) {
+      return { ok: false, message: "Cable type not supported between these device types." };
+    }
+
+    if (connectionExists(nodeA.id, portAId, nodeB.id, portBId)) {
+      return { ok: false, message: "Those ports are already connected." };
+    }
+
+    if (isPortBlocked(nodeA.id, portAId, cableType) || isPortBlocked(nodeB.id, portBId, cableType)) {
+      return { ok: false, message: "One of the selected ports is already in use." };
+    }
+
+    return { ok: true, message: "" };
+  }
+
+  function getPortConnectionState(node, portItem) {
+    if (!portItem) return "invalid";
+
+    if (!state.connectFrom) {
+      if (state.mode === "connect" && !portSupportsCable(portItem, state.linkType)) {
+        return "disabled";
+      }
+      if (state.mode === "connect" && isPortBlocked(node.id, portItem.id, state.linkType)) {
+        return "used";
+      }
+      return "idle";
+    }
+
+    if (state.connectFrom.nodeId === node.id && state.connectFrom.portId === portItem.id) {
+      return "source";
+    }
+
+    const sourceNode = getNode(state.connectFrom.nodeId);
+    const sourcePortId = state.connectFrom.portId;
+    const validation = validateConnection(sourceNode, sourcePortId, node, portItem.id, state.linkType);
+    return validation.ok ? "target" : "invalid";
+  }
+
   function deviceAllowsCable(deviceA, deviceB, cableType) {
     const typeA = deviceA.type;
     const typeB = deviceB.type;
@@ -300,19 +464,9 @@
   }
 
   function createConnection(nodeA, portAId, nodeB, portBId, cableType) {
-    if (!nodeA || !nodeB) return false;
-    const portA = getPort(nodeA, portAId);
-    const portB = getPort(nodeB, portBId);
-    if (!portCompatible(portA, portB, cableType)) {
-      setHint("Cable type not compatible with selected ports.");
-      return false;
-    }
-    if (!deviceAllowsCable(nodeA, nodeB, cableType)) {
-      setHint("Cable type not supported between these device types.");
-      return false;
-    }
-    if (isPortBlocked(nodeA.id, portAId, cableType) || isPortBlocked(nodeB.id, portBId, cableType)) {
-      setHint("One of the selected ports is already in use.");
+    const validation = validateConnection(nodeA, portAId, nodeB, portBId, cableType);
+    if (!validation.ok) {
+      setHint(validation.message);
       return false;
     }
     state.connections.push({
@@ -329,8 +483,9 @@
   function renderNodes() {
     Array.from(el.canvas.querySelectorAll(".node")).forEach((node) => node.remove());
     state.nodes.forEach((node) => {
+      const meta = deviceMeta(node.type);
       const div = document.createElement("div");
-      div.className = "node";
+      div.className = `node node-family-${meta.family}`;
       if (state.selectedNodeIds.has(node.id)) {
         div.classList.add("is-selected");
       }
@@ -341,20 +496,29 @@
       const portsHtml = node.ports
         .map((p) => {
           const classes = ["port-chip"];
+          const connectionState = getPortConnectionState(node, p);
           if (isPortUsed(node.id, p.id)) classes.push("is-used");
           if (p.up) classes.push("is-up");
           if (!p.up && (p.ip || p.vlan)) classes.push("is-down");
-          if (state.connectFrom && state.connectFrom.nodeId === node.id && state.connectFrom.portId === p.id) {
-            classes.push("is-selected");
-          }
+          if (connectionState === "source") classes.push("is-selected", "is-source");
+          if (connectionState === "target") classes.push("is-connect-target");
+          if (connectionState === "invalid") classes.push("is-connect-invalid");
+          if (connectionState === "disabled") classes.push("is-disabled");
           return `<button class="${classes.join(" ")}" data-port="${p.id}" type="button">${p.label}</button>`;
         })
         .join("");
 
       div.innerHTML = `
-        <div class="node-icon">${icons[node.type] || "[?]"}</div>
-        <div>${node.label}</div>
-        <div class="node-ports">${portsHtml}</div>
+        <div class="node-card">
+          <div class="node-head">
+            <div class="node-icon">${meta.short}</div>
+            <div class="node-copy">
+              <span class="node-label">${node.label}</span>
+              <span class="node-model">${node.model || node.type}</span>
+            </div>
+          </div>
+          <div class="node-ports">${portsHtml}</div>
+        </div>
       `;
 
       div.addEventListener("mousedown", (event) => {
@@ -375,6 +539,7 @@
 
       el.canvas.appendChild(div);
     });
+    updateWorkspaceStats();
   }
 
   function renderConnections() {
@@ -398,18 +563,31 @@
       label.setAttribute("x", (p1.x + p2.x) / 2 + 6);
       label.setAttribute("y", (p1.y + p2.y) / 2 - 6);
       label.classList.add("link-label");
-      label.textContent = `${conn.fromPort} ↔ ${conn.toPort}`;
+      label.textContent = `${conn.fromPort} <-> ${conn.toPort}`;
       el.svg.appendChild(label);
     });
   }
 
   function handlePortClick(nodeId, portId) {
+    const node = getNode(nodeId);
+    const portItem = getPort(node, portId);
+
     if (state.mode !== "connect") {
       setHint("Switch to Connect mode to use cable connections.");
       return;
     }
 
-    if (isPortBlocked(nodeId, portId, state.linkType)) {
+    if (!node || !portItem) {
+      setHint("That port is no longer available.");
+      return;
+    }
+
+    if (!portSupportsCable(portItem, state.linkType)) {
+      setHint(`The active ${state.linkType} cable does not work with ${portItem.label}.`);
+      return;
+    }
+
+    if (!state.connectFrom && isPortBlocked(nodeId, portId, state.linkType)) {
       setHint("Selected port is already used. Choose another port.");
       return;
     }
@@ -417,7 +595,7 @@
     if (!state.connectFrom) {
       state.connectFrom = { nodeId, portId };
       renderNodes();
-      setHint("Select a second device port to create a connection.");
+      setHint(`Source selected: ${node.label} ${portItem.label}. Choose a destination port.`);
       return;
     }
 
@@ -428,12 +606,26 @@
       return;
     }
 
+    if (state.connectFrom.nodeId === nodeId) {
+      state.connectFrom = { nodeId, portId };
+      renderNodes();
+      setHint(`Source changed: ${node.label} ${portItem.label}. Choose a destination port.`);
+      return;
+    }
+
     const nodeA = getNode(state.connectFrom.nodeId);
-    const nodeB = getNode(nodeId);
-    const created = createConnection(nodeA, state.connectFrom.portId, nodeB, portId, state.linkType);
+    const sourcePort = getPort(nodeA, state.connectFrom.portId);
+    const validation = validateConnection(nodeA, state.connectFrom.portId, node, portId, state.linkType);
+    if (!validation.ok) {
+      renderNodes();
+      setHint(validation.message);
+      return;
+    }
+
+    const created = createConnection(nodeA, state.connectFrom.portId, node, portId, state.linkType);
     if (created) {
       renderConnections();
-      setHint(`${state.linkType.toUpperCase()} link created.`);
+      setHint(`${state.linkType.toUpperCase()} link created: ${nodeA.label} ${sourcePort?.label || state.connectFrom.portId} -> ${node.label} ${portItem.label}.`);
     }
     state.connectFrom = null;
     renderNodes();
@@ -469,6 +661,7 @@
     state.inspectorNodeId = null;
     renderNodes();
     updateInspector();
+    updateWorkspaceStats();
   }
 
   function bindPaletteDnD() {
@@ -479,6 +672,19 @@
           model: item.dataset.model || ""
         }));
       });
+
+      item.addEventListener("dblclick", () => {
+        addDeviceFromPalette(item.dataset.device, item.dataset.model || "");
+      });
+
+      const addButton = item.querySelector("[data-add-device]");
+      if (addButton) {
+        addButton.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          addDeviceFromPalette(item.dataset.device, item.dataset.model || "");
+        });
+      }
     });
 
     el.canvas.addEventListener("dragover", (event) => {
@@ -501,8 +707,8 @@
       if (!type) return;
 
       const rect = canvasRect();
-      const x = clamp(snapValue(event.clientX - rect.left - 40), 0, rect.width - 110);
-      const y = clamp(snapValue(event.clientY - rect.top - 30), 0, rect.height - 90);
+      const x = clamp(snapValue(event.clientX - rect.left - 46), 0, rect.width - NODE_WIDTH);
+      const y = clamp(snapValue(event.clientY - rect.top - 34), 0, rect.height - NODE_HEIGHT);
       createNode(type, model, x, y, { label: `${model || type}` });
       renderNodes();
       renderConnections();
@@ -518,8 +724,8 @@
       if (!node) return;
 
       const rect = canvasRect();
-      node.x = clamp(snapValue(event.clientX - rect.left - state.dragOffset.x), 0, rect.width - 110);
-      node.y = clamp(snapValue(event.clientY - rect.top - state.dragOffset.y), 0, rect.height - 90);
+      node.x = clamp(snapValue(event.clientX - rect.left - state.dragOffset.x), 0, rect.width - NODE_WIDTH);
+      node.y = clamp(snapValue(event.clientY - rect.top - state.dragOffset.y), 0, rect.height - NODE_HEIGHT);
 
       renderNodes();
       renderConnections();
@@ -559,6 +765,21 @@
     if (el.modeMove) el.modeMove.classList.toggle("btn-primary", mode === "move");
     if (el.modeConnect) el.modeConnect.classList.toggle("btn-primary", mode === "connect");
     renderNodes();
+    updateWorkspaceStats();
+  }
+
+  function setLinkType(linkType) {
+    state.linkType = linkType || "ethernet";
+    if (state.connectFrom) {
+      const sourceNode = getNode(state.connectFrom.nodeId);
+      const sourcePort = getPort(sourceNode, state.connectFrom.portId);
+      if (!portSupportsCable(sourcePort, state.linkType)) {
+        state.connectFrom = null;
+        setHint(`Active cable changed to ${state.linkType}. Previous source selection was cleared.`);
+      }
+    }
+    renderNodes();
+    updateLinkTypeButtons();
   }
 
   function bindModeControls() {
@@ -570,15 +791,21 @@
     }
     if (el.linkType) {
       el.linkType.addEventListener("change", () => {
-        state.linkType = el.linkType.value || "ethernet";
+        setLinkType(el.linkType.value || "ethernet");
       });
     }
+    el.cableButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        setLinkType(button.dataset.linkType || "ethernet");
+      });
+    });
     if (el.snap) {
       el.snap.addEventListener("click", () => {
         state.snapToGrid = !state.snapToGrid;
         el.snap.textContent = `Snap: ${state.snapToGrid ? "On" : "Off"}`;
       });
     }
+    updateLinkTypeButtons();
   }
 
   function alignSelected(axis) {
@@ -633,6 +860,25 @@
     if (el.distributeV) {
       el.distributeV.addEventListener("click", () => distributeSelected("y"));
     }
+  }
+
+  function bindPaletteFilters() {
+    el.filterButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        state.paletteCategory = button.dataset.category || "all";
+        el.filterButtons.forEach((item) => item.classList.toggle("is-active", item === button));
+        applyPaletteFilters();
+      });
+    });
+
+    if (el.deviceSearch) {
+      el.deviceSearch.addEventListener("input", () => {
+        state.searchTerm = el.deviceSearch.value || "";
+        applyPaletteFilters();
+      });
+    }
+
+    applyPaletteFilters();
   }
 
   function serializeTopology() {
@@ -790,13 +1036,17 @@
     if (!el.inspectorPanel || !el.inspectorEmpty) return;
     const node = state.inspectorNodeId ? getNode(state.inspectorNodeId) : null;
     if (!node) {
+      if (el.inspectorTitle) el.inspectorTitle.textContent = "No device selected";
+      if (el.inspectorMeta) el.inspectorMeta.textContent = "Select a device on the canvas to edit details and interfaces.";
       el.inspectorEmpty.style.display = "block";
       el.inspectorPanel.style.display = "none";
       return;
     }
 
+    if (el.inspectorTitle) el.inspectorTitle.textContent = node.label || node.model || node.type;
+    if (el.inspectorMeta) el.inspectorMeta.textContent = `${node.type}${node.model ? ` - ${node.model}` : ""}`;
     el.inspectorEmpty.style.display = "none";
-    el.inspectorPanel.style.display = "block";
+    el.inspectorPanel.style.display = "grid";
     if (el.inspectorLabel) el.inspectorLabel.value = node.label || "";
     if (el.inspectorHostname) el.inspectorHostname.value = node.config.hostname || "";
     if (el.inspectorMgmtIp) el.inspectorMgmtIp.value = node.config.mgmtIp || "";
@@ -1133,6 +1383,13 @@
       const isTyping = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA");
       if (isTyping) return;
 
+      if (event.key === "Escape" && state.connectFrom) {
+        state.connectFrom = null;
+        renderNodes();
+        setHint("Pending connection cleared.");
+        return;
+      }
+
       if (event.key.toLowerCase() === "c") {
         setMode("connect");
       }
@@ -1150,6 +1407,7 @@
         state.selectedNodeIds.clear();
         state.selectedNodeId = null;
         state.inspectorNodeId = null;
+        state.connectFrom = null;
         renderNodes();
         renderConnections();
         updateInspector();
@@ -1160,7 +1418,17 @@
 
   function bindCanvasSelectionClear() {
     el.canvas.addEventListener("click", (event) => {
-      if (event.target === el.canvas || event.target === el.svg) {
+      if (
+        event.target === el.canvas ||
+        event.target === el.svg ||
+        event.target.classList.contains("topology-grid-overlay") ||
+        event.target.classList.contains("topology-empty-state")
+      ) {
+        if (state.connectFrom) {
+          state.connectFrom = null;
+          renderNodes();
+          setHint("Pending connection cleared.");
+        }
         clearSelection();
       }
     });
@@ -1180,6 +1448,7 @@
   document.addEventListener("DOMContentLoaded", () => {
     bindModeControls();
     bindPaletteDnD();
+    bindPaletteFilters();
     bindMove();
     bindClear();
     bindLayoutControls();
@@ -1190,7 +1459,9 @@
     bindCanvasSelectionClear();
     loadFromStorage();
     mergeCliContexts();
+    setLinkType(el.linkType?.value || "ethernet");
     setMode("move");
+    updateWorkspaceStats();
     window.addEventListener("focus", mergeCliContexts);
     window.addEventListener("storage", (event) => {
       if (event.key === STORAGE_KEYS.cliContexts) {
@@ -1199,3 +1470,4 @@
     });
   });
 })();
+

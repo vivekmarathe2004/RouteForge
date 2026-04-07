@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -10,139 +10,434 @@
   <header class="topbar">
     <nav class="nav">
       <a class="brand" href="index.html">RouteForge NetLab</a>
-      <div class="nav-links">
-        <a href="index.html">Dashboard</a>
-        <a href="learn.html">Learn</a>
-        <a href="quizzes.html">Quizzes</a>
-        <a href="subnet-trainer.html">Subnet</a>
-        <a href="calculators.html">Calculators</a>
-        <a href="labs.html">Labs</a>
-        <a href="flashcards.html">Flashcards</a>
-        <a href="cli-simulator.html">CLI</a>
-        <a class="active" href="topology-builder.html">Topology</a>
-        <a href="cheat-sheets.html">Cheat Sheets</a>
-      </div>
+      <div class="nav-links"></div>
     </nav>
   </header>
 
-  <main class="container">
-    <section class="hero">
-      <h1>Visual Topology Builder</h1>
-      <p>Drag routers, switches, PCs, and servers. Connect devices for visualization practice.</p>
-      <div class="toolbar">
-        <button id="topology-mode-move" class="btn">Move</button>
-        <button id="topology-mode-connect" class="btn">Connect</button>
-        <div style="min-width:180px;">
-          <label for="topology-link-type">Cable Type</label>
-          <select id="topology-link-type" style="max-width:180px;">
-            <option value="ethernet">Ethernet</option>
-            <option value="serial">Serial</option>
-            <option value="fiber">Fiber</option>
-            <option value="wireless">Wireless</option>
-          </select>
+  <main class="container topology-shell">
+    <section class="topology-workspace">
+      <div class="topology-workspace-head">
+        <div>
+          <p class="topology-kicker">Topology Builder</p>
+          <h1>Build and test visual network layouts faster</h1>
+          <p class="page-subtitle">A tighter lab workspace for dragging devices, planning links, saving scenarios, and opening configs in the CLI simulator.</p>
         </div>
-        <button id="topology-snap" class="btn">Snap: On</button>
-        <button id="topology-clear" class="btn btn-danger">Clear Canvas</button>
-      </div>
-      <div class="toolbar" style="margin-top:10px;">
-        <div style="min-width:240px;">
-          <label for="topology-template">Templates</label>
-          <select id="topology-template" style="max-width:240px;"></select>
+        <div class="topology-workspace-summary">
+          <span class="chip">Drag from dock</span>
+          <span class="chip">Double-click to quick add</span>
+          <span class="chip">Shift+Click for multi-select</span>
         </div>
-        <button id="topology-load-template" class="btn">Load Template</button>
-        <button id="topology-align-left" class="btn">Align Left</button>
-        <button id="topology-align-top" class="btn">Align Top</button>
-        <button id="topology-distribute-h" class="btn">Distribute H</button>
-        <button id="topology-distribute-v" class="btn">Distribute V</button>
-      </div>
-      <div class="toolbar" style="margin-top:10px;">
-        <div style="min-width:220px;">
-          <label for="topology-save-name">Save Name</label>
-          <input id="topology-save-name" placeholder="e.g., Branch OSPF">
-        </div>
-        <button id="topology-save" class="btn">Save</button>
-        <div style="min-width:220px;">
-          <label for="topology-saved-list">Saved</label>
-          <select id="topology-saved-list" style="max-width:220px;"></select>
-        </div>
-        <button id="topology-load" class="btn">Load</button>
-        <button id="topology-export" class="btn">Export JSON</button>
-        <label class="btn">
-          Import JSON
-          <input id="topology-import" type="file" accept="application/json" hidden>
-        </label>
-      </div>
-      <p id="topology-hint" class="muted"></p>
-    </section>
-
-    <section class="topology-layout" style="margin-top:14px;">
-      <aside class="palette">
-        <h3>Device Palette</h3>
-        <p class="muted">Routers</p>
-        <div class="device-item" draggable="true" data-device="Router" data-model="ISR 2911">Router ISR 2911</div>
-        <div class="device-item" draggable="true" data-device="Router" data-model="ISR 4331">Router ISR 4331</div>
-        <div class="device-item" draggable="true" data-device="Router" data-model="ASR 1001-X">Router ASR 1001-X</div>
-
-        <p class="muted">Switches</p>
-        <div class="device-item" draggable="true" data-device="Switch" data-model="Catalyst 2960">Switch C2960</div>
-        <div class="device-item" draggable="true" data-device="Switch" data-model="Catalyst 3560">Switch C3560</div>
-        <div class="device-item" draggable="true" data-device="Switch" data-model="Catalyst 9300">Switch C9300</div>
-
-        <p class="muted">Security & Wireless</p>
-        <div class="device-item" draggable="true" data-device="Firewall" data-model="ASA 5506-X">Firewall ASA 5506-X</div>
-        <div class="device-item" draggable="true" data-device="Firewall" data-model="Firepower 1010">Firewall FPR 1010</div>
-        <div class="device-item" draggable="true" data-device="AccessPoint" data-model="Aironet 1830">Access Point 1830</div>
-
-        <p class="muted">Endpoints</p>
-        <div class="device-item" draggable="true" data-device="PC" data-model="Windows PC">Windows PC</div>
-        <div class="device-item" draggable="true" data-device="Laptop" data-model="Laptop">Laptop</div>
-        <div class="device-item" draggable="true" data-device="Server" data-model="Server">Server</div>
-        <div class="device-item" draggable="true" data-device="Phone" data-model="IP Phone">IP Phone</div>
-        <div class="device-item" draggable="true" data-device="Printer" data-model="Printer">Printer</div>
-
-        <p class="muted">WAN</p>
-        <div class="device-item" draggable="true" data-device="Cloud" data-model="Internet">Internet Cloud</div>
-        <div class="device-item" draggable="true" data-device="Cloud" data-model="MPLS">MPLS Cloud</div>
-      </aside>
-
-      <div id="topology-canvas" class="canvas-wrap">
-        <svg id="topology-svg" class="builder-svg"></svg>
       </div>
 
-      <aside class="palette inspector">
-        <h3>Device Inspector</h3>
-        <div id="inspector-empty" class="muted">Select a device to view configuration.</div>
-        <div id="inspector-panel" style="display:none;">
-          <div class="toolbar" style="margin:8px 0;">
-            <button id="inspector-open-cli" class="btn btn-primary">Open CLI</button>
-            <button id="inspector-export-config" class="btn">Export Config</button>
-            <button id="inspector-delete" class="btn btn-danger">Delete</button>
+      <section class="topology-studio">
+        <aside class="topology-sidebar topology-dock">
+          <div class="topology-panel-head">
+            <div>
+              <p class="topology-panel-kicker">Device Dock</p>
+              <h2>Inventory</h2>
+            </div>
+            <span class="topology-panel-note">Drag or add</span>
           </div>
-          <label for="inspector-label">Label</label>
-          <input id="inspector-label">
-          <label for="inspector-hostname">Hostname</label>
-          <input id="inspector-hostname">
-          <label for="inspector-mgmt-ip">Management IP</label>
-          <input id="inspector-mgmt-ip" placeholder="e.g., 192.168.1.2/24">
-          <label for="inspector-role">Role</label>
-          <input id="inspector-role" placeholder="e.g., Core, Access, Edge">
-          <label for="inspector-notes">Notes</label>
-          <textarea id="inspector-notes" rows="3"></textarea>
 
-          <div class="toolbar" style="margin:10px 0 6px;">
-            <span class="muted">Ports</span>
+          <div class="topology-filter-row" id="topology-category-filters">
+            <button class="chip topology-filter is-active" type="button" data-category="all">All</button>
+            <button class="chip topology-filter" type="button" data-category="routers">Routers</button>
+            <button class="chip topology-filter" type="button" data-category="switches">Switches</button>
+            <button class="chip topology-filter" type="button" data-category="security">Security</button>
+            <button class="chip topology-filter" type="button" data-category="endpoints">Endpoints</button>
+            <button class="chip topology-filter" type="button" data-category="wan">WAN</button>
           </div>
-          <div id="inspector-ports"></div>
 
-          <details style="margin-top:10px;">
-            <summary>Routing / VLAN Notes</summary>
-            <label for="inspector-routes">Static Routes (one per line)</label>
-            <textarea id="inspector-routes" rows="3" placeholder="ip route 0.0.0.0 0.0.0.0 10.0.0.1"></textarea>
-            <label for="inspector-vlans">VLANs (one per line)</label>
-            <textarea id="inspector-vlans" rows="3" placeholder="vlan 10 name SALES"></textarea>
-          </details>
-        </div>
-      </aside>
+          <div class="topology-search">
+            <label for="topology-device-search">Search devices</label>
+            <input id="topology-device-search" type="search" placeholder="Router, server, ASA...">
+          </div>
+
+          <div class="topology-palette-groups">
+            <section class="topology-palette-group" data-category="routers">
+              <div class="topology-palette-group-head">
+                <h3>Routers</h3>
+                <span>Routing</span>
+              </div>
+              <div class="device-item" draggable="true" data-device="Router" data-model="ISR 2911" data-category="routers">
+                <div class="device-item-copy">
+                  <span class="device-item-badge device-item-router">RTR</span>
+                  <div>
+                    <strong>ISR 2911</strong>
+                    <span>Integrated services router</span>
+                  </div>
+                </div>
+                <button type="button" data-add-device>Add</button>
+              </div>
+              <div class="device-item" draggable="true" data-device="Router" data-model="ISR 4331" data-category="routers">
+                <div class="device-item-copy">
+                  <span class="device-item-badge device-item-router">RTR</span>
+                  <div>
+                    <strong>ISR 4331</strong>
+                    <span>Branch routing and WAN edge</span>
+                  </div>
+                </div>
+                <button type="button" data-add-device>Add</button>
+              </div>
+              <div class="device-item" draggable="true" data-device="Router" data-model="ASR 1001-X" data-category="routers">
+                <div class="device-item-copy">
+                  <span class="device-item-badge device-item-router">ASR</span>
+                  <div>
+                    <strong>ASR 1001-X</strong>
+                    <span>Enterprise aggregation router</span>
+                  </div>
+                </div>
+                <button type="button" data-add-device>Add</button>
+              </div>
+            </section>
+
+            <section class="topology-palette-group" data-category="switches">
+              <div class="topology-palette-group-head">
+                <h3>Switches</h3>
+                <span>Campus LAN</span>
+              </div>
+              <div class="device-item" draggable="true" data-device="Switch" data-model="Catalyst 2960" data-category="switches">
+                <div class="device-item-copy">
+                  <span class="device-item-badge device-item-switch">SW</span>
+                  <div>
+                    <strong>Catalyst 2960</strong>
+                    <span>Access layer switching</span>
+                  </div>
+                </div>
+                <button type="button" data-add-device>Add</button>
+              </div>
+              <div class="device-item" draggable="true" data-device="Switch" data-model="Catalyst 3560" data-category="switches">
+                <div class="device-item-copy">
+                  <span class="device-item-badge device-item-switch">SW</span>
+                  <div>
+                    <strong>Catalyst 3560</strong>
+                    <span>Layer 3 switch</span>
+                  </div>
+                </div>
+                <button type="button" data-add-device>Add</button>
+              </div>
+              <div class="device-item" draggable="true" data-device="Switch" data-model="Catalyst 9300" data-category="switches">
+                <div class="device-item-copy">
+                  <span class="device-item-badge device-item-switch">9300</span>
+                  <div>
+                    <strong>Catalyst 9300</strong>
+                    <span>Modern enterprise stackable</span>
+                  </div>
+                </div>
+                <button type="button" data-add-device>Add</button>
+              </div>
+            </section>
+
+            <section class="topology-palette-group" data-category="security">
+              <div class="topology-palette-group-head">
+                <h3>Security and Wireless</h3>
+                <span>Edge control</span>
+              </div>
+              <div class="device-item" draggable="true" data-device="Firewall" data-model="ASA 5506-X" data-category="security">
+                <div class="device-item-copy">
+                  <span class="device-item-badge device-item-firewall">FW</span>
+                  <div>
+                    <strong>ASA 5506-X</strong>
+                    <span>Classic branch firewall</span>
+                  </div>
+                </div>
+                <button type="button" data-add-device>Add</button>
+              </div>
+              <div class="device-item" draggable="true" data-device="Firewall" data-model="Firepower 1010" data-category="security">
+                <div class="device-item-copy">
+                  <span class="device-item-badge device-item-firewall">FPR</span>
+                  <div>
+                    <strong>Firepower 1010</strong>
+                    <span>Secure branch edge</span>
+                  </div>
+                </div>
+                <button type="button" data-add-device>Add</button>
+              </div>
+              <div class="device-item" draggable="true" data-device="AccessPoint" data-model="Aironet 1830" data-category="security">
+                <div class="device-item-copy">
+                  <span class="device-item-badge device-item-ap">AP</span>
+                  <div>
+                    <strong>Aironet 1830</strong>
+                    <span>Wireless access point</span>
+                  </div>
+                </div>
+                <button type="button" data-add-device>Add</button>
+              </div>
+            </section>
+
+            <section class="topology-palette-group" data-category="endpoints">
+              <div class="topology-palette-group-head">
+                <h3>Endpoints</h3>
+                <span>Clients</span>
+              </div>
+              <div class="device-item" draggable="true" data-device="PC" data-model="Windows PC" data-category="endpoints">
+                <div class="device-item-copy">
+                  <span class="device-item-badge device-item-endpoint">PC</span>
+                  <div>
+                    <strong>Windows PC</strong>
+                    <span>Ethernet workstation</span>
+                  </div>
+                </div>
+                <button type="button" data-add-device>Add</button>
+              </div>
+              <div class="device-item" draggable="true" data-device="Laptop" data-model="Laptop" data-category="endpoints">
+                <div class="device-item-copy">
+                  <span class="device-item-badge device-item-endpoint">LT</span>
+                  <div>
+                    <strong>Laptop</strong>
+                    <span>Ethernet and Wi-Fi client</span>
+                  </div>
+                </div>
+                <button type="button" data-add-device>Add</button>
+              </div>
+              <div class="device-item" draggable="true" data-device="Server" data-model="Server" data-category="endpoints">
+                <div class="device-item-copy">
+                  <span class="device-item-badge device-item-endpoint">SV</span>
+                  <div>
+                    <strong>Server</strong>
+                    <span>Application or infrastructure host</span>
+                  </div>
+                </div>
+                <button type="button" data-add-device>Add</button>
+              </div>
+              <div class="device-item" draggable="true" data-device="Phone" data-model="IP Phone" data-category="endpoints">
+                <div class="device-item-copy">
+                  <span class="device-item-badge device-item-endpoint">PH</span>
+                  <div>
+                    <strong>IP Phone</strong>
+                    <span>Voice endpoint</span>
+                  </div>
+                </div>
+                <button type="button" data-add-device>Add</button>
+              </div>
+              <div class="device-item" draggable="true" data-device="Printer" data-model="Printer" data-category="endpoints">
+                <div class="device-item-copy">
+                  <span class="device-item-badge device-item-endpoint">PR</span>
+                  <div>
+                    <strong>Printer</strong>
+                    <span>Shared office output</span>
+                  </div>
+                </div>
+                <button type="button" data-add-device>Add</button>
+              </div>
+            </section>
+
+            <section class="topology-palette-group" data-category="wan">
+              <div class="topology-palette-group-head">
+                <h3>WAN and Cloud</h3>
+                <span>External links</span>
+              </div>
+              <div class="device-item" draggable="true" data-device="Cloud" data-model="Internet" data-category="wan">
+                <div class="device-item-copy">
+                  <span class="device-item-badge device-item-cloud">WAN</span>
+                  <div>
+                    <strong>Internet Cloud</strong>
+                    <span>Public network edge</span>
+                  </div>
+                </div>
+                <button type="button" data-add-device>Add</button>
+              </div>
+              <div class="device-item" draggable="true" data-device="Cloud" data-model="MPLS" data-category="wan">
+                <div class="device-item-copy">
+                  <span class="device-item-badge device-item-cloud">MPLS</span>
+                  <div>
+                    <strong>MPLS Cloud</strong>
+                    <span>Private WAN transport</span>
+                  </div>
+                </div>
+                <button type="button" data-add-device>Add</button>
+              </div>
+            </section>
+          </div>
+        </aside>
+
+        <section class="topology-stage">
+          <div class="topology-console-bar">
+            <div class="topology-control-group">
+              <p class="topology-control-label">Workspace</p>
+              <div class="topology-control-actions">
+                <button id="topology-mode-move" class="btn btn-primary" type="button">Move</button>
+                <button id="topology-mode-connect" class="btn" type="button">Connect</button>
+                <button id="topology-snap" class="btn" type="button">Snap: On</button>
+                <button id="topology-clear" class="btn btn-danger" type="button">Clear Canvas</button>
+              </div>
+            </div>
+
+            <div class="topology-control-group topology-inline-field">
+              <label for="topology-link-type" class="topology-control-label">Active cable</label>
+              <select id="topology-link-type">
+                <option value="ethernet">Ethernet</option>
+                <option value="serial">Serial</option>
+                <option value="fiber">Fiber</option>
+                <option value="wireless">Wireless</option>
+              </select>
+            </div>
+
+            <div class="topology-control-group topology-inline-field">
+              <label for="topology-template" class="topology-control-label">Templates</label>
+              <div class="topology-control-actions">
+                <select id="topology-template"></select>
+                <button id="topology-load-template" class="btn" type="button">Load</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="topology-stage-stats">
+            <div class="workspace-stat">
+              <span id="topology-device-count">0</span>
+              <small>Devices</small>
+            </div>
+            <div class="workspace-stat">
+              <span id="topology-link-count">0</span>
+              <small>Links</small>
+            </div>
+            <div class="workspace-stat">
+              <span id="topology-selected-count">0</span>
+              <small>Selected</small>
+            </div>
+            <div class="workspace-stat">
+              <span id="topology-mode-label">Move</span>
+              <small>Mode</small>
+            </div>
+            <div class="workspace-stat">
+              <span id="topology-cable-label">Ethernet</span>
+              <small>Cable</small>
+            </div>
+          </div>
+
+          <div class="topology-canvas-shell">
+            <div class="topology-canvas-head">
+              <div>
+                <p class="topology-panel-kicker">Logical Workspace</p>
+                <h2>Canvas</h2>
+              </div>
+              <div class="topology-canvas-legend">
+                <span><i class="legend-swatch legend-ethernet"></i>Ethernet</span>
+                <span><i class="legend-swatch legend-serial"></i>Serial</span>
+                <span><i class="legend-swatch legend-fiber"></i>Fiber</span>
+                <span><i class="legend-swatch legend-wireless"></i>Wireless</span>
+              </div>
+            </div>
+
+            <div id="topology-canvas" class="canvas-wrap">
+              <div class="topology-grid-overlay" aria-hidden="true"></div>
+              <div id="topology-empty-state" class="topology-empty-state">
+                <strong>Start building</strong>
+                <span>Drag devices here or use the Add buttons in the dock to place a starter topology.</span>
+              </div>
+              <svg id="topology-svg" class="builder-svg"></svg>
+            </div>
+          </div>
+
+          <div class="topology-cable-dock">
+            <button class="cable-chip is-active" type="button" data-link-type="ethernet">Copper Ethernet</button>
+            <button class="cable-chip" type="button" data-link-type="serial">Serial DCE/DTE</button>
+            <button class="cable-chip" type="button" data-link-type="fiber">Fiber</button>
+            <button class="cable-chip" type="button" data-link-type="wireless">Wireless</button>
+          </div>
+
+          <div class="topology-actions-grid">
+            <div class="card topology-action-card">
+              <p class="topology-control-label">Arrange selection</p>
+              <div class="topology-control-actions">
+                <button id="topology-align-left" class="btn" type="button">Align Left</button>
+                <button id="topology-align-top" class="btn" type="button">Align Top</button>
+                <button id="topology-distribute-h" class="btn" type="button">Distribute H</button>
+                <button id="topology-distribute-v" class="btn" type="button">Distribute V</button>
+              </div>
+            </div>
+
+            <div class="card topology-action-card topology-save-card">
+              <div class="topology-save-row">
+                <div>
+                  <label for="topology-save-name">Save Name</label>
+                  <input id="topology-save-name" placeholder="e.g., Branch OSPF">
+                </div>
+                <button id="topology-save" class="btn btn-primary" type="button">Save</button>
+              </div>
+              <div class="topology-save-row">
+                <div>
+                  <label for="topology-saved-list">Saved Topologies</label>
+                  <select id="topology-saved-list"></select>
+                </div>
+                <div class="topology-control-actions">
+                  <button id="topology-load" class="btn" type="button">Load</button>
+                  <button id="topology-export" class="btn" type="button">Export JSON</button>
+                  <label class="btn topology-import-btn">
+                    Import JSON
+                    <input id="topology-import" type="file" accept="application/json" hidden>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p id="topology-hint" class="topology-hint">Move mode: drag devices. Use Shift+Click to multi-select.</p>
+        </section>
+
+        <aside class="topology-sidebar topology-inspector-panel">
+          <div class="topology-panel-head">
+            <div>
+              <p class="topology-panel-kicker">Device Inspector</p>
+              <h2 id="inspector-device-title">No device selected</h2>
+              <p id="inspector-device-meta" class="muted">Select a device on the canvas to edit details and interfaces.</p>
+            </div>
+          </div>
+
+          <div id="inspector-empty" class="topology-empty-inspector">
+            <strong>Nothing selected</strong>
+            <span>Pick a node to rename it, manage ports, add notes, or export a running config.</span>
+          </div>
+
+          <div id="inspector-panel" style="display:none;">
+            <div class="topology-inspector-actions">
+              <button id="inspector-open-cli" class="btn btn-primary" type="button">Open CLI</button>
+              <button id="inspector-export-config" class="btn" type="button">Export Config</button>
+              <button id="inspector-delete" class="btn btn-danger" type="button">Delete</button>
+            </div>
+
+            <div class="topology-form-grid">
+              <div>
+                <label for="inspector-label">Label</label>
+                <input id="inspector-label">
+              </div>
+              <div>
+                <label for="inspector-hostname">Hostname</label>
+                <input id="inspector-hostname">
+              </div>
+              <div>
+                <label for="inspector-mgmt-ip">Management IP</label>
+                <input id="inspector-mgmt-ip" placeholder="e.g., 192.168.1.2/24">
+              </div>
+              <div>
+                <label for="inspector-role">Role</label>
+                <input id="inspector-role" placeholder="e.g., Core, Access, Edge">
+              </div>
+            </div>
+
+            <div>
+              <label for="inspector-notes">Notes</label>
+              <textarea id="inspector-notes" rows="3"></textarea>
+            </div>
+
+            <div class="topology-inspector-section">
+              <div class="topology-inspector-section-head">
+                <h3>Interfaces</h3>
+                <span>IP, VLAN, and link state</span>
+              </div>
+              <div id="inspector-ports"></div>
+            </div>
+
+            <details class="topology-inspector-section" open>
+              <summary>Routing and VLAN Notes</summary>
+              <label for="inspector-routes">Static Routes</label>
+              <textarea id="inspector-routes" rows="3" placeholder="ip route 0.0.0.0 0.0.0.0 10.0.0.1"></textarea>
+              <label for="inspector-vlans">VLANs</label>
+              <textarea id="inspector-vlans" rows="3" placeholder="vlan 10 name SALES"></textarea>
+            </details>
+          </div>
+        </aside>
+      </section>
     </section>
   </main>
 
