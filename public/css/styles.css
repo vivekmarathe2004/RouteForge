@@ -49,24 +49,28 @@ a {
 .nav {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 14px 20px;
+  padding: 16px 20px;
   display: flex;
-  gap: 10px;
-  align-items: center;
+  gap: 14px;
+  align-items: flex-start;
   justify-content: space-between;
   flex-wrap: wrap;
 }
 
 .brand {
   font-weight: 700;
+  font-size: 1rem;
   letter-spacing: 0.3px;
   color: var(--accent);
+  padding-top: 8px;
 }
 
 .nav-links {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  flex: 1 1 560px;
+  align-items: center;
 }
 
 .nav-auth {
@@ -74,6 +78,7 @@ a {
   align-items: center;
   gap: 8px;
   margin-left: auto;
+  flex: 0 0 auto;
 }
 
 .auth-pill {
@@ -81,6 +86,12 @@ a {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  justify-content: flex-end;
+  padding: 8px 10px;
+  border: 1px solid rgba(91, 99, 197, 0.12);
+  border-radius: 14px;
+  background: linear-gradient(160deg, rgba(247, 248, 251, 0.98), rgba(230, 233, 242, 0.7));
+  box-shadow: 0 10px 22px rgba(47, 51, 71, 0.08);
 }
 
 .nav-links a {
@@ -236,6 +247,8 @@ a {
 .auth-chip {
   background: rgba(91, 99, 197, 0.18);
   border-color: rgba(91, 99, 197, 0.4);
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .chip.tag-filter {
@@ -284,6 +297,29 @@ button:disabled {
   background: rgba(209, 115, 115, 0.12);
 }
 
+.auth-login-btn,
+.auth-logout-btn {
+  min-height: 40px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: rgba(247, 248, 251, 0.95);
+}
+
+.auth-register-btn {
+  min-height: 40px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(91, 99, 197, 0.2), rgba(122, 130, 212, 0.28));
+  border-color: rgba(91, 99, 197, 0.36);
+  font-weight: 600;
+}
+
+.auth-register-btn:hover,
+.auth-login-btn:hover,
+.auth-logout-btn:hover {
+  box-shadow: 0 10px 18px rgba(47, 51, 71, 0.14);
+}
+
 .toolbar {
   display: flex;
   gap: 10px;
@@ -294,7 +330,7 @@ button:disabled {
 .auth-tabs {
   display: flex;
   gap: 8px;
-  margin: 16px 0 12px;
+  margin: 18px 0 14px;
   flex-wrap: wrap;
 }
 
@@ -303,10 +339,20 @@ button:disabled {
   gap: 12px;
 }
 
+.auth-modal-head {
+  align-items: flex-start;
+}
+
+.auth-modal-copy {
+  max-width: 280px;
+}
+
 .auth-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(47, 51, 71, 0.45);
+  background:
+    radial-gradient(circle at top left, rgba(122, 130, 212, 0.22), transparent 32%),
+    rgba(47, 51, 71, 0.52);
   display: grid;
   place-items: center;
   padding: 20px;
@@ -319,11 +365,24 @@ button:disabled {
 
 .auth-modal {
   width: min(460px, 100%);
-  background: var(--bg);
+  background:
+    linear-gradient(145deg, rgba(247, 248, 251, 0.98), rgba(230, 233, 242, 0.95));
+  border-color: rgba(91, 99, 197, 0.18);
+  box-shadow: 0 24px 44px rgba(47, 51, 71, 0.2);
 }
 
 .auth-callout {
   margin-top: 14px;
+}
+
+.auth-close-btn {
+  min-height: 38px;
+  border-radius: 999px;
+  background: rgba(247, 248, 251, 0.9);
+}
+
+#auth-status {
+  min-height: 1.2em;
 }
 
 input,
@@ -845,5 +904,37 @@ summary {
 
   .hero {
     padding: 16px;
+  }
+
+  .nav {
+    padding: 14px 14px 16px;
+    gap: 12px;
+  }
+
+  .brand {
+    padding-top: 0;
+  }
+
+  .nav-links,
+  .nav-auth {
+    width: 100%;
+  }
+
+  .auth-pill {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .auth-pill > *:not(.auth-chip) {
+    flex: 1 1 140px;
+  }
+
+  .auth-chip {
+    width: 100%;
+    text-align: center;
+  }
+
+  .auth-modal {
+    padding: 14px;
   }
 }

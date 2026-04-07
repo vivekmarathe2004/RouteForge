@@ -49,12 +49,12 @@
       backdrop.className = "auth-modal-backdrop is-hidden";
       backdrop.innerHTML = `
         <div class="auth-modal card" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
-          <div class="lab-card-top">
-            <div>
+          <div class="lab-card-top auth-modal-head">
+            <div class="auth-modal-copy">
               <h3 id="auth-modal-title">Sign in</h3>
               <p id="auth-modal-subtitle" class="muted">Sync your progress across devices and deployments.</p>
             </div>
-            <button type="button" data-auth-close>Close</button>
+            <button type="button" class="auth-close-btn" data-auth-close>Close</button>
           </div>
           <div class="auth-tabs">
             <button type="button" id="auth-tab-login" class="chip is-active" data-auth-mode="login">Sign In</button>
@@ -207,7 +207,7 @@
       navAuth.innerHTML = `
         <div class="auth-pill">
           <span class="chip auth-chip">Sync: ${escapeHtml(session.user.name)}</span>
-          <button type="button" id="auth-logout-button">Sign Out</button>
+          <button type="button" id="auth-logout-button" class="auth-logout-btn">Sign Out</button>
         </div>
       `;
       bindAuthNavButtons();
@@ -217,8 +217,8 @@
     navAuth.innerHTML = `
       <div class="auth-pill">
         <span class="chip auth-chip">Guest mode</span>
-        <button type="button" id="auth-login-button">Sign In</button>
-        <button type="button" id="auth-register-button" class="btn btn-primary">Create Account</button>
+        <button type="button" id="auth-login-button" class="auth-login-btn">Sign In</button>
+        <button type="button" id="auth-register-button" class="btn btn-primary auth-register-btn">Create Account</button>
       </div>
     `;
     bindAuthNavButtons();
