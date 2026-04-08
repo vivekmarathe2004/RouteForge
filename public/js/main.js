@@ -4,6 +4,7 @@
   let authStep = "credentials";
   let pendingOtpEmail = "";
   let authSubmitting = false;
+  let capsLockToastVisible = false;
   const navConfig = [
     {
       type: "link",
@@ -52,13 +53,51 @@
       .replaceAll("'", "&#039;");
   }
 
+  function ensureToastUi() {
+    let stack = document.getElementById("toast-stack");
+    if (stack) return stack;
+
+    stack = document.createElement("div");
+    stack.id = "toast-stack";
+    stack.className = "toast-stack";
+    stack.setAttribute("aria-live", "polite");
+    stack.setAttribute("aria-atomic", "true");
+    document.body.appendChild(stack);
+    return stack;
+  }
+
+  function showToast(message, tone = "info", timeout = 3600) {
+    if (!message) return null;
+
+    const stack = ensureToastUi();
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${tone}`;
+    toast.setAttribute("role", tone === "error" ? "alert" : "status");
+    toast.textContent = message;
+    stack.appendChild(toast);
+
+    requestAnimationFrame(() => {
+      toast.classList.add("is-visible");
+    });
+
+    window.setTimeout(() => {
+      toast.classList.remove("is-visible");
+      window.setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 220);
+    }, timeout);
+
+    return toast;
+  }
+
   function authElements() {
     return {
       navAuth: document.getElementById("nav-auth"),
       backdrop: document.getElementById("auth-modal-backdrop"),
       title: document.getElementById("auth-modal-title"),
       subtitle: document.getElementById("auth-modal-subtitle"),
-      status: document.getElementById("auth-status"),
       form: document.getElementById("auth-form"),
       submit: document.getElementById("auth-submit"),
       nameRow: document.getElementById("auth-name-row"),
@@ -66,20 +105,12 @@
       email: document.getElementById("auth-email"),
       password: document.getElementById("auth-password"),
       passwordToggle: document.getElementById("auth-password-toggle"),
-      passwordMeta: document.getElementById("auth-password-meta"),
-      passwordRuleLength: document.getElementById("auth-password-rule-length"),
-      passwordRuleMix: document.getElementById("auth-password-rule-mix"),
-      passwordRuleCase: document.getElementById("auth-password-rule-case"),
-      capsLock: document.getElementById("auth-capslock"),
       confirmRow: document.getElementById("auth-confirm-row"),
       confirm: document.getElementById("auth-confirm-password"),
       confirmToggle: document.getElementById("auth-confirm-toggle"),
-      confirmMeta: document.getElementById("auth-confirm-meta"),
-      registerNote: document.getElementById("auth-register-note"),
       credentialsSection: document.getElementById("auth-credentials"),
       otpSection: document.getElementById("auth-otp-section"),
       otp: document.getElementById("auth-otp"),
-      otpMeta: document.getElementById("auth-otp-meta"),
       otpBack: document.getElementById("auth-otp-back"),
       otpResend: document.getElementById("auth-otp-resend"),
       loginTab: document.getElementById("auth-tab-login"),
@@ -88,17 +119,8 @@
   }
 
   function setAuthStatus(message, tone = "muted") {
-    const { status } = authElements();
-    if (!status) return;
-    status.className = tone;
-    status.textContent = message || "";
-  }
-
-  function setMetaMessage(element, message, tone = "muted") {
-    if (!element) return;
-    element.textContent = message || "";
-    element.className = `auth-field-copy ${tone}`;
-    element.classList.toggle("is-hidden", !message);
+    const toastTone = tone === "status-bad" ? "error" : tone === "status-good" ? "success" : tone === "status-warn" ? "warning" : "info";
+    showToast(message, toastTone);
   }
 
   function setInputError(input, hasError) {
@@ -111,7 +133,6 @@
     const ui = authElements();
     [ui.name, ui.email, ui.password, ui.confirm].forEach((input) => setInputError(input, false));
     setInputError(ui.otp, false);
-    setAuthStatus("");
   }
 
   function setPasswordVisibility(input, toggle, visible) {
@@ -121,39 +142,15 @@
     toggle.setAttribute("aria-pressed", visible ? "true" : "false");
   }
 
-  function passwordStrengthState(password) {
-    if (!password) {
-      return { message: "Use 8 or more characters. More variety makes it stronger.", tone: "muted" };
-    }
-
-    if (password.length < 8) {
-      return { message: "Too short for account creation.", tone: "status-bad" };
-    }
-
-    const hasLower = /[a-z]/.test(password);
-    const hasUpper = /[A-Z]/.test(password);
-    const hasNumber = /\d/.test(password);
-    const hasSymbol = /[^A-Za-z0-9]/.test(password);
-    const varietyScore = [hasLower || hasUpper, hasNumber, hasSymbol, hasLower && hasUpper, password.length >= 12]
-      .filter(Boolean)
-      .length;
-
-    if (varietyScore >= 4) {
-      return { message: "Strong password.", tone: "status-good" };
-    }
-
-    if (varietyScore >= 3) {
-      return { message: "Good password.", tone: "status-good" };
-    }
-
-    return { message: "This works, but adding more variety would make it stronger.", tone: "status-warn" };
-  }
-
   function updateCapsLockState(event, forceHidden = false) {
-    const ui = authElements();
-    if (!ui.capsLock) return;
     const isVisible = !forceHidden && Boolean(event && event.getModifierState && event.getModifierState("CapsLock"));
-    setMetaMessage(ui.capsLock, isVisible ? "Caps Lock is on." : "", isVisible ? "status-warn" : "muted");
+    if (isVisible && !capsLockToastVisible) {
+      capsLockToastVisible = true;
+      showToast("Caps Lock is on.", "warning", 2200);
+    }
+    if (!isVisible) {
+      capsLockToastVisible = false;
+    }
   }
 
   function updatePasswordUi() {
@@ -162,9 +159,6 @@
 
     const isRegister = authMode === "register";
     const isVerifyStep = authMode === "register" && authStep === "verify";
-    const password = ui.password.value;
-    const confirmPassword = ui.confirm ? ui.confirm.value : "";
-    const strength = passwordStrengthState(password);
 
     if (ui.credentialsSection) {
       ui.credentialsSection.classList.toggle("is-hidden", isVerifyStep);
@@ -176,90 +170,31 @@
     ui.confirmRow.style.display = isRegister && !isVerifyStep ? "" : "none";
     ui.confirm.required = isRegister && !isVerifyStep;
     ui.confirm.disabled = !isRegister || isVerifyStep;
-    ui.passwordMeta.dataset.mode = isRegister ? "register" : "login";
-    ui.passwordRuleLength.parentElement.style.display = isRegister ? "flex" : "none";
     ui.nameRow.style.display = isRegister && !isVerifyStep ? "" : "none";
     ui.name.required = isRegister && !isVerifyStep;
     ui.submit.textContent = isVerifyStep ? "Verify Email" : (isRegister ? "Create Account" : "Sign In");
-    if (ui.registerNote) {
-      ui.registerNote.classList.toggle("is-hidden", !isRegister || isVerifyStep);
-      ui.registerNote.textContent = isRegister && !isVerifyStep
-        ? "We will email a verification code after you create the account. That code will appear in the next step."
-        : "";
-    }
     if (ui.otpBack) {
       ui.otpBack.classList.toggle("is-hidden", !isVerifyStep);
     }
     if (ui.otpResend) {
       ui.otpResend.classList.toggle("is-hidden", !isVerifyStep);
     }
-    if (ui.otpMeta) {
-      if (isVerifyStep) {
-        const emailText = pendingOtpEmail || ui.email.value.trim();
-        setMetaMessage(
-          ui.otpMeta,
-          emailText ? `We sent a verification code to ${emailText}. Enter it here to finish creating your account.` : "Enter the verification code from your email.",
-          "muted"
-        );
-      } else {
-        setMetaMessage(ui.otpMeta, "", "muted");
-      }
-    }
-
-    ui.passwordRuleLength.classList.toggle("is-met", password.length >= 8);
-    ui.passwordRuleMix.classList.toggle("is-met", /[A-Za-z]/.test(password) && (/[\d]/.test(password) || /[^A-Za-z0-9]/.test(password)));
-    ui.passwordRuleCase.classList.toggle("is-met", /[a-z]/.test(password) && /[A-Z]/.test(password));
-
-    if (isRegister) {
-      setMetaMessage(ui.passwordMeta, strength.message, strength.tone);
-    } else {
-      setMetaMessage(ui.passwordMeta, password ? "Use Show if you want to verify your password before signing in." : "", "muted");
-    }
-
-    if (!isRegister || isVerifyStep) {
-      setMetaMessage(ui.confirmMeta, "", "muted");
-      setInputError(ui.confirm, false);
-      return;
-    }
-
-    if (!confirmPassword) {
-      setMetaMessage(ui.confirmMeta, "", "muted");
-      setInputError(ui.confirm, false);
-      return;
-    }
-
-    const matches = confirmPassword === password;
-    setMetaMessage(
-      ui.confirmMeta,
-      matches ? "Passwords match." : "Passwords do not match yet.",
-      matches ? "status-good" : "status-bad"
-    );
-    setInputError(ui.confirm, !matches);
-  }
-
-  function updateOtpUi() {
-    const ui = authElements();
-    if (!ui.otp) return;
-    const isVerifyStep = authMode === "register" && authStep === "verify";
-    if (!isVerifyStep) {
-      setMetaMessage(ui.otpMeta, "", "muted");
-      return;
-    }
-
-    const code = ui.otp.value.trim();
-    const emailText = pendingOtpEmail || ui.email.value.trim();
-    setMetaMessage(
-      ui.otpMeta,
-      emailText ? `Enter the code sent to ${emailText}. You can resend it if needed.` : "Enter the verification code from your email.",
-      "muted"
-    );
-    setInputError(ui.otp, Boolean(code && code.length < 6));
   }
 
   function setAuthStep(nextStep) {
     authStep = nextStep === "verify" ? "verify" : "credentials";
     updatePasswordUi();
-    updateOtpUi();
+    const ui = authElements();
+    if (authMode === "register" && authStep === "verify") {
+      const emailText = pendingOtpEmail || ui.email.value.trim();
+      showToast(
+        emailText
+          ? `We sent a verification code to ${emailText}. Enter the code to finish creating your account.`
+          : "We sent a verification code. Enter it to finish creating your account.",
+        "info",
+        4600
+      );
+    }
   }
 
   function resetOtpFlow() {
@@ -295,13 +230,11 @@
       setInputError(ui.password, true);
       setAuthStatus("Password must be at least 8 characters.", "status-bad");
       ui.password.focus();
-      updatePasswordUi();
       return false;
     }
 
     if (isRegister && ui.confirm.value !== ui.password.value) {
       setInputError(ui.confirm, true);
-      setMetaMessage(ui.confirmMeta, "Passwords must match before you create an account.", "status-bad");
       setAuthStatus("Passwords do not match.", "status-bad");
       ui.confirm.focus();
       return false;
@@ -320,7 +253,6 @@
       setInputError(ui.otp, true);
       setAuthStatus("Enter the verification code from your email.", "status-bad");
       ui.otp.focus();
-      updateOtpUi();
       return false;
     }
 
@@ -431,20 +363,12 @@
                 <label for="auth-email">Email</label>
                 <input id="auth-email" type="email" autocomplete="email" maxlength="255" placeholder="you@example.com" required>
               </div>
-              <div id="auth-register-note" class="auth-field-copy auth-register-note muted is-hidden" aria-live="polite"></div>
               <div>
                 <div class="auth-label-row">
                   <label for="auth-password">Password</label>
                   <button type="button" id="auth-password-toggle" class="auth-inline-btn" aria-controls="auth-password" aria-pressed="false">Show</button>
                 </div>
                 <input id="auth-password" type="password" autocomplete="current-password" minlength="8" placeholder="At least 8 characters" required>
-                <div id="auth-password-meta" class="auth-field-copy muted is-hidden" aria-live="polite"></div>
-                <div class="auth-password-rules" aria-hidden="true">
-                  <span id="auth-password-rule-length">8+ characters</span>
-                  <span id="auth-password-rule-mix">letters + number or symbol</span>
-                  <span id="auth-password-rule-case">upper + lowercase</span>
-                </div>
-                <div id="auth-capslock" class="auth-field-copy muted is-hidden" aria-live="polite"></div>
               </div>
               <div id="auth-confirm-row" style="display:none;">
                 <div class="auth-label-row">
@@ -452,7 +376,6 @@
                   <button type="button" id="auth-confirm-toggle" class="auth-inline-btn" aria-controls="auth-confirm-password" aria-pressed="false">Show</button>
                 </div>
                 <input id="auth-confirm-password" type="password" autocomplete="new-password" minlength="8" placeholder="Re-enter your password">
-                <div id="auth-confirm-meta" class="auth-field-copy muted is-hidden" aria-live="polite"></div>
               </div>
             </div>
             <div id="auth-otp-section" class="auth-otp-section is-hidden">
@@ -461,12 +384,10 @@
                 <button type="button" id="auth-otp-resend" class="auth-inline-btn">Resend code</button>
               </div>
               <input id="auth-otp" inputmode="numeric" autocomplete="one-time-code" maxlength="12" placeholder="Enter the code from your email">
-              <div id="auth-otp-meta" class="auth-field-copy muted" aria-live="polite"></div>
               <div class="toolbar auth-otp-actions" style="margin-bottom:0;">
                 <button type="button" id="auth-otp-back" class="auth-inline-btn">Edit details</button>
               </div>
             </div>
-            <div id="auth-status" class="muted" aria-live="polite"></div>
             <div class="toolbar" style="margin-bottom:0;">
               <button type="submit" id="auth-submit" class="btn btn-primary">Sign In</button>
             </div>
@@ -510,19 +431,12 @@
       if (otp) {
         otp.addEventListener("input", () => {
           setInputError(otp, false);
-          if (!authSubmitting) {
-            setAuthStatus("");
-          }
-          updateOtpUi();
         });
       }
       if (otpBack) {
         otpBack.addEventListener("click", () => {
           setAuthStep("credentials");
           const activeUi = authElements();
-          activeUi.submit.textContent = "Create Account";
-          activeUi.status.textContent = "";
-          setAuthStatus("");
           activeUi.password.focus();
         });
       }
@@ -560,12 +474,11 @@
     if (ui.otp) {
       ui.otp.value = "";
     }
-    if (ui.otpMeta) {
-      setMetaMessage(ui.otpMeta, "", "muted");
-    }
     updateCapsLockState(null, true);
     updatePasswordUi();
-    updateOtpUi();
+    if (isRegister) {
+      showToast("Registration will send a verification code to your email.", "info", 4200);
+    }
   }
 
   function openAuthModal(mode) {
@@ -589,7 +502,6 @@
       ui.otp.value = "";
     }
     updateCapsLockState(null, true);
-    setAuthStatus("");
   }
 
   function bindAuthNavButtons() {
