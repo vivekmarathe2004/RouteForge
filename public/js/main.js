@@ -114,6 +114,54 @@
     return `${tone}:${String(message).trim().replace(/\s+/g, " ").slice(0, 120)}`;
   }
 
+  function updateToastCount(toast, count) {
+    const countNode = toast.querySelector(".toast-count");
+    if (!countNode) return;
+
+    if (count > 1) {
+      countNode.textContent = `x${count}`;
+      countNode.classList.remove("is-hidden");
+    } else {
+      countNode.textContent = "";
+      countNode.classList.add("is-hidden");
+    }
+  }
+
+  function scheduleToastDismissal(toast, delay) {
+    if (!toast || delay <= 0) return;
+
+    if (toast._toastTimer) {
+      window.clearTimeout(toast._toastTimer);
+    }
+
+    toast._toastPaused = false;
+    toast._toastRemaining = delay;
+    toast._toastStartedAt = Date.now();
+    toast._toastTimer = window.setTimeout(() => dismissToast(toast), delay);
+  }
+
+  function pauseToast(toast) {
+    if (!toast || toast.dataset.toastDismissed === "true" || toast._toastPaused || !toast._toastTimer) return;
+
+    window.clearTimeout(toast._toastTimer);
+    toast._toastTimer = null;
+    toast._toastPaused = true;
+    if (toast._toastStartedAt) {
+      const elapsed = Date.now() - toast._toastStartedAt;
+      toast._toastRemaining = Math.max(0, (toast._toastRemaining || 0) - elapsed);
+    }
+  }
+
+  function resumeToast(toast) {
+    if (!toast || toast.dataset.toastDismissed === "true" || !toast._toastPaused) return;
+
+    toast._toastPaused = false;
+    const remaining = Math.max(0, toast._toastRemaining || 0);
+    if (remaining > 0) {
+      scheduleToastDismissal(toast, remaining);
+    }
+  }
+
   function dismissToast(toast) {
     if (!toast || toast.dataset.toastDismissed === "true") return;
     toast.dataset.toastDismissed = "true";
@@ -122,6 +170,8 @@
       window.clearTimeout(toast._toastTimer);
       toast._toastTimer = null;
     }
+    toast._toastPaused = false;
+    toast._toastRemaining = 0;
 
     toast.classList.remove("is-visible");
     window.setTimeout(() => {
@@ -159,11 +209,15 @@
       if (messageNode) {
         messageNode.textContent = config.message;
       }
+      const count = Number.parseInt(existing.dataset.toastCount || "1", 10) + 1;
+      existing.dataset.toastCount = String(count);
+      updateToastCount(existing, count);
       if (existing._toastTimer) {
         window.clearTimeout(existing._toastTimer);
+        existing._toastTimer = null;
       }
       if (finalTimeout > 0) {
-        existing._toastTimer = window.setTimeout(() => dismissToast(existing), finalTimeout);
+        scheduleToastDismissal(existing, finalTimeout);
       }
       return existing;
     }
@@ -173,25 +227,38 @@
     toast.className = `toast toast-${finalTone}`;
     toast.setAttribute("role", finalTone === "error" ? "alert" : "status");
     toast.dataset.toastKey = key;
+    toast.dataset.toastCount = "1";
     toast.innerHTML = `
       <div class="toast-body">
         <span class="toast-message"></span>
+        <span class="toast-count is-hidden" aria-hidden="true"></span>
       </div>
       <button type="button" class="toast-close" aria-label="Dismiss notification">×</button>
     `;
     toast.querySelector(".toast-message").textContent = config.message;
+    updateToastCount(toast, 1);
 
     const closeButton = toast.querySelector(".toast-close");
     if (closeButton) {
       closeButton.addEventListener("click", () => dismissToast(toast));
     }
 
-    stack.appendChild(toast);
+    toast.addEventListener("pointerenter", () => pauseToast(toast));
+    toast.addEventListener("pointerleave", () => resumeToast(toast));
+    toast.addEventListener("focusin", () => pauseToast(toast));
+    toast.addEventListener("focusout", (event) => {
+      const nextFocus = event.relatedTarget;
+      if (!nextFocus || !toast.contains(nextFocus)) {
+        resumeToast(toast);
+      }
+    });
+
+    stack.prepend(toast);
     toastState.entries.set(key, toast);
-    toastState.order.push(toast);
+    toastState.order.unshift(toast);
 
     while (toastState.order.length > 4) {
-      const oldest = toastState.order.shift();
+      const oldest = toastState.order.pop();
       dismissToast(oldest);
     }
 
@@ -199,9 +266,7 @@
       toast.classList.add("is-visible");
     });
 
-    if (finalTimeout > 0) {
-      toast._toastTimer = window.setTimeout(() => dismissToast(toast), finalTimeout);
-    }
+    scheduleToastDismissal(toast, finalTimeout);
 
     return toast;
   }
