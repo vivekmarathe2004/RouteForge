@@ -64,6 +64,7 @@ PORT=3000
 ```
 
 New registrations now require email OTP verification, so Supabase email delivery must be configured for your project.
+In the Supabase Auth `Confirm signup` email template, use `{{ .Token }}` for the verification code and remove the confirmation link if you want a code-only email.
 
 Before you run the app, execute [supabase/schema.sql](supabase/schema.sql) in the Supabase SQL Editor to create the production tables RouteForge expects.
 
