@@ -498,6 +498,74 @@ button:disabled {
   gap: 12px;
 }
 
+.auth-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.auth-label-row label {
+  margin-bottom: 0;
+}
+
+.auth-inline-btn {
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(247, 248, 251, 0.82);
+  border-color: rgba(91, 99, 197, 0.22);
+  font-size: 0.78rem;
+}
+
+.auth-field-copy {
+  margin-top: 7px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.auth-field-copy.is-hidden {
+  display: none;
+}
+
+.auth-password-rules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.auth-password-rules span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(91, 99, 197, 0.16);
+  background: rgba(247, 248, 251, 0.72);
+  color: var(--text-muted);
+  font-size: 0.74rem;
+}
+
+.auth-password-rules span::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(108, 114, 136, 0.5);
+}
+
+.auth-password-rules span.is-met {
+  border-color: rgba(91, 99, 197, 0.3);
+  background: rgba(91, 99, 197, 0.12);
+  color: var(--text);
+}
+
+.auth-password-rules span.is-met::before {
+  background: var(--accent);
+}
+
 .auth-modal-head {
   align-items: flex-start;
 }
@@ -570,6 +638,13 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgba(91, 99, 197, 0.18);
 }
 
+input.input-error,
+select.input-error,
+textarea.input-error {
+  border-color: rgba(209, 115, 115, 0.8);
+  box-shadow: 0 0 0 3px rgba(209, 115, 115, 0.14);
+}
+
 label {
   display: block;
   font-size: 0.85rem;
@@ -618,6 +693,10 @@ label {
 
 .status-good {
   color: var(--accent);
+}
+
+.status-warn {
+  color: var(--warning);
 }
 
 .status-bad {
@@ -2003,6 +2082,15 @@ summary {
 
   .auth-modal {
     padding: 14px;
+  }
+
+  .auth-label-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .auth-inline-btn {
+    margin-left: auto;
   }
 
   .topology-workspace-head,

@@ -63,9 +63,172 @@
       name: document.getElementById("auth-name"),
       email: document.getElementById("auth-email"),
       password: document.getElementById("auth-password"),
+      passwordToggle: document.getElementById("auth-password-toggle"),
+      passwordMeta: document.getElementById("auth-password-meta"),
+      passwordRuleLength: document.getElementById("auth-password-rule-length"),
+      passwordRuleMix: document.getElementById("auth-password-rule-mix"),
+      passwordRuleCase: document.getElementById("auth-password-rule-case"),
+      capsLock: document.getElementById("auth-capslock"),
+      confirmRow: document.getElementById("auth-confirm-row"),
+      confirm: document.getElementById("auth-confirm-password"),
+      confirmToggle: document.getElementById("auth-confirm-toggle"),
+      confirmMeta: document.getElementById("auth-confirm-meta"),
       loginTab: document.getElementById("auth-tab-login"),
       registerTab: document.getElementById("auth-tab-register")
     };
+  }
+
+  function setAuthStatus(message, tone = "muted") {
+    const { status } = authElements();
+    if (!status) return;
+    status.className = tone;
+    status.textContent = message || "";
+  }
+
+  function setMetaMessage(element, message, tone = "muted") {
+    if (!element) return;
+    element.textContent = message || "";
+    element.className = `auth-field-copy ${tone}`;
+    element.classList.toggle("is-hidden", !message);
+  }
+
+  function setInputError(input, hasError) {
+    if (!input) return;
+    input.classList.toggle("input-error", Boolean(hasError));
+    input.setAttribute("aria-invalid", hasError ? "true" : "false");
+  }
+
+  function clearAuthErrors() {
+    const ui = authElements();
+    [ui.name, ui.email, ui.password, ui.confirm].forEach((input) => setInputError(input, false));
+    setAuthStatus("");
+  }
+
+  function setPasswordVisibility(input, toggle, visible) {
+    if (!input || !toggle) return;
+    input.type = visible ? "text" : "password";
+    toggle.textContent = visible ? "Hide" : "Show";
+    toggle.setAttribute("aria-pressed", visible ? "true" : "false");
+  }
+
+  function passwordStrengthState(password) {
+    if (!password) {
+      return { message: "Use 8 or more characters. More variety makes it stronger.", tone: "muted" };
+    }
+
+    if (password.length < 8) {
+      return { message: "Too short for account creation.", tone: "status-bad" };
+    }
+
+    const hasLower = /[a-z]/.test(password);
+    const hasUpper = /[A-Z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    const hasSymbol = /[^A-Za-z0-9]/.test(password);
+    const varietyScore = [hasLower || hasUpper, hasNumber, hasSymbol, hasLower && hasUpper, password.length >= 12]
+      .filter(Boolean)
+      .length;
+
+    if (varietyScore >= 4) {
+      return { message: "Strong password.", tone: "status-good" };
+    }
+
+    if (varietyScore >= 3) {
+      return { message: "Good password.", tone: "status-good" };
+    }
+
+    return { message: "This works, but adding more variety would make it stronger.", tone: "status-warn" };
+  }
+
+  function updateCapsLockState(event, forceHidden = false) {
+    const ui = authElements();
+    if (!ui.capsLock) return;
+    const isVisible = !forceHidden && Boolean(event && event.getModifierState && event.getModifierState("CapsLock"));
+    setMetaMessage(ui.capsLock, isVisible ? "Caps Lock is on." : "", isVisible ? "status-warn" : "muted");
+  }
+
+  function updatePasswordUi() {
+    const ui = authElements();
+    if (!ui.password) return;
+
+    const isRegister = authMode === "register";
+    const password = ui.password.value;
+    const confirmPassword = ui.confirm ? ui.confirm.value : "";
+    const strength = passwordStrengthState(password);
+
+    ui.confirmRow.style.display = isRegister ? "" : "none";
+    ui.confirm.required = isRegister;
+    ui.confirm.disabled = !isRegister;
+    ui.passwordMeta.dataset.mode = isRegister ? "register" : "login";
+    ui.passwordRuleLength.parentElement.style.display = isRegister ? "flex" : "none";
+
+    ui.passwordRuleLength.classList.toggle("is-met", password.length >= 8);
+    ui.passwordRuleMix.classList.toggle("is-met", /[A-Za-z]/.test(password) && (/[\d]/.test(password) || /[^A-Za-z0-9]/.test(password)));
+    ui.passwordRuleCase.classList.toggle("is-met", /[a-z]/.test(password) && /[A-Z]/.test(password));
+
+    if (isRegister) {
+      setMetaMessage(ui.passwordMeta, strength.message, strength.tone);
+    } else {
+      setMetaMessage(ui.passwordMeta, password ? "Use Show if you want to verify your password before signing in." : "", "muted");
+    }
+
+    if (!isRegister) {
+      setMetaMessage(ui.confirmMeta, "", "muted");
+      setInputError(ui.confirm, false);
+      return;
+    }
+
+    if (!confirmPassword) {
+      setMetaMessage(ui.confirmMeta, "", "muted");
+      setInputError(ui.confirm, false);
+      return;
+    }
+
+    const matches = confirmPassword === password;
+    setMetaMessage(
+      ui.confirmMeta,
+      matches ? "Passwords match." : "Passwords do not match yet.",
+      matches ? "status-good" : "status-bad"
+    );
+    setInputError(ui.confirm, !matches);
+  }
+
+  function validateAuthForm() {
+    const ui = authElements();
+    const isRegister = authMode === "register";
+
+    clearAuthErrors();
+
+    if (isRegister && ui.name.value.trim().length < 2) {
+      setInputError(ui.name, true);
+      setAuthStatus("Name must be at least 2 characters.", "status-bad");
+      ui.name.focus();
+      return false;
+    }
+
+    if (!ui.email.value.trim() || !ui.email.validity.valid) {
+      setInputError(ui.email, true);
+      setAuthStatus("Enter a valid email address.", "status-bad");
+      ui.email.focus();
+      return false;
+    }
+
+    if (ui.password.value.length < 8) {
+      setInputError(ui.password, true);
+      setAuthStatus("Password must be at least 8 characters.", "status-bad");
+      ui.password.focus();
+      updatePasswordUi();
+      return false;
+    }
+
+    if (isRegister && ui.confirm.value !== ui.password.value) {
+      setInputError(ui.confirm, true);
+      setMetaMessage(ui.confirmMeta, "Passwords must match before you create an account.", "status-bad");
+      setAuthStatus("Passwords do not match.", "status-bad");
+      ui.confirm.focus();
+      return false;
+    }
+
+    return true;
   }
 
   function renderNavigation() {
@@ -172,8 +335,26 @@
               <input id="auth-email" type="email" autocomplete="email" maxlength="255" placeholder="you@example.com" required>
             </div>
             <div>
-              <label for="auth-password">Password</label>
+              <div class="auth-label-row">
+                <label for="auth-password">Password</label>
+                <button type="button" id="auth-password-toggle" class="auth-inline-btn" aria-controls="auth-password" aria-pressed="false">Show</button>
+              </div>
               <input id="auth-password" type="password" autocomplete="current-password" minlength="8" placeholder="At least 8 characters" required>
+              <div id="auth-password-meta" class="auth-field-copy muted is-hidden" aria-live="polite"></div>
+              <div class="auth-password-rules" aria-hidden="true">
+                <span id="auth-password-rule-length">8+ characters</span>
+                <span id="auth-password-rule-mix">letters + number or symbol</span>
+                <span id="auth-password-rule-case">upper + lowercase</span>
+              </div>
+              <div id="auth-capslock" class="auth-field-copy muted is-hidden" aria-live="polite"></div>
+            </div>
+            <div id="auth-confirm-row" style="display:none;">
+              <div class="auth-label-row">
+                <label for="auth-confirm-password">Confirm password</label>
+                <button type="button" id="auth-confirm-toggle" class="auth-inline-btn" aria-controls="auth-confirm-password" aria-pressed="false">Show</button>
+              </div>
+              <input id="auth-confirm-password" type="password" autocomplete="new-password" minlength="8" placeholder="Re-enter your password">
+              <div id="auth-confirm-meta" class="auth-field-copy muted is-hidden" aria-live="polite"></div>
             </div>
             <div id="auth-status" class="muted" aria-live="polite"></div>
             <div class="toolbar" style="margin-bottom:0;">
@@ -190,10 +371,32 @@
         }
       });
 
-      const { form, loginTab, registerTab } = authElements();
+      const { form, loginTab, registerTab, password, confirm, passwordToggle, confirmToggle, name, email } = authElements();
       form.addEventListener("submit", handleAuthSubmit);
       loginTab.addEventListener("click", () => switchAuthMode("login"));
       registerTab.addEventListener("click", () => switchAuthMode("register"));
+      [name, email, password, confirm].forEach((input) => {
+        if (!input) return;
+        input.addEventListener("input", () => {
+          setInputError(input, false);
+          if (!authSubmitting) {
+            setAuthStatus("");
+          }
+        });
+      });
+      password.addEventListener("input", updatePasswordUi);
+      confirm.addEventListener("input", updatePasswordUi);
+      [password, confirm].forEach((input) => {
+        input.addEventListener("keydown", updateCapsLockState);
+        input.addEventListener("keyup", updateCapsLockState);
+        input.addEventListener("blur", () => updateCapsLockState(null, true));
+      });
+      passwordToggle.addEventListener("click", () => {
+        setPasswordVisibility(password, passwordToggle, password.type === "password");
+      });
+      confirmToggle.addEventListener("click", () => {
+        setPasswordVisibility(confirm, confirmToggle, confirm.type === "password");
+      });
     }
   }
 
@@ -212,9 +415,16 @@
     ui.name.required = isRegister;
     ui.loginTab.classList.toggle("is-active", !isRegister);
     ui.registerTab.classList.toggle("is-active", isRegister);
-    ui.status.className = "muted";
-    ui.status.textContent = "";
+    setAuthStatus("");
+    setPasswordVisibility(ui.password, ui.passwordToggle, false);
+    setPasswordVisibility(ui.confirm, ui.confirmToggle, false);
     ui.password.setAttribute("autocomplete", isRegister ? "new-password" : "current-password");
+    ui.confirm.setAttribute("autocomplete", isRegister ? "new-password" : "off");
+    if (!isRegister) {
+      ui.confirm.value = "";
+    }
+    updateCapsLockState(null, true);
+    updatePasswordUi();
   }
 
   function openAuthModal(mode) {
@@ -233,8 +443,8 @@
     const ui = authElements();
     if (!ui.backdrop) return;
     ui.backdrop.classList.add("is-hidden");
-    ui.status.className = "muted";
-    ui.status.textContent = "";
+    updateCapsLockState(null, true);
+    setAuthStatus("");
   }
 
   function bindAuthNavButtons() {
@@ -271,21 +481,22 @@
     if (authSubmitting || !window.ProgressAPI) return;
 
     const ui = authElements();
+    if (!validateAuthForm()) return;
+
     authSubmitting = true;
     ui.submit.disabled = true;
-    ui.status.className = "muted";
-    ui.status.textContent = authMode === "register" ? "Creating account..." : "Signing in...";
+    setAuthStatus(authMode === "register" ? "Creating account..." : "Signing in...");
 
     try {
       if (authMode === "register") {
         await window.ProgressAPI.register({
-          name: ui.name.value,
-          email: ui.email.value,
+          name: ui.name.value.trim(),
+          email: ui.email.value.trim(),
           password: ui.password.value
         });
       } else {
         await window.ProgressAPI.login({
-          email: ui.email.value,
+          email: ui.email.value.trim(),
           password: ui.password.value
         });
       }
@@ -293,8 +504,7 @@
       closeAuthModal();
       window.location.reload();
     } catch (error) {
-      ui.status.className = "status-bad";
-      ui.status.textContent = error.message;
+      setAuthStatus(error.message, "status-bad");
     } finally {
       authSubmitting = false;
       ui.submit.disabled = false;
