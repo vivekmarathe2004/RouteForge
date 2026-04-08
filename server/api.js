@@ -79,8 +79,29 @@ function trimText(value, maxLength) {
   return String(value || "").trim().slice(0, maxLength);
 }
 
+function trimOptionalText(value, maxLength) {
+  const text = trimText(value, maxLength);
+  return text.length ? text : null;
+}
+
 function normalizeEmail(value) {
   return String(value || "").trim().toLowerCase();
+}
+
+function serializeProfile(row) {
+  if (!row) return null;
+
+  return {
+    id: row.id,
+    email: row.email || "",
+    displayName: row.display_name || "",
+    fullName: row.full_name || "",
+    phone: row.phone || "",
+    location: row.location || "",
+    bio: row.bio || "",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
 }
 
 function validateEmail(email) {
@@ -125,6 +146,26 @@ async function findUserByEmail(admin, email) {
   }
 
   return null;
+}
+
+async function loadProfileRecord(admin, userId) {
+  const { data, error } = await admin
+    .from("profiles")
+    .select("id, email, display_name, full_name, phone, location, bio, created_at, updated_at")
+    .eq("id", userId)
+    .limit(1);
+
+  if (error) {
+    throw new Error(error.message || "Failed to load profile.");
+  }
+
+  return Array.isArray(data) && data.length ? data[0] : null;
+}
+
+async function ensureProfileRecord(user) {
+  await upsertProfile(user);
+  const admin = createSupabaseAdminClient();
+  return loadProfileRecord(admin, user.id);
 }
 
 router.use(attachSession);
@@ -316,6 +357,112 @@ router.post("/auth/login", async (req, res) => {
   } catch (error) {
     console.error("login failed", error);
     return res.status(500).json({ error: error.message || "Failed to sign in." });
+  }
+});
+
+router.get("/auth/profile", requireAuth, async (req, res) => {
+  try {
+    const admin = createSupabaseAdminClient();
+    const profileRow = await ensureProfileRecord(req.user) || await loadProfileRecord(admin, req.user.id);
+    const progress = await buildProgressSnapshot(req.user.id);
+
+    return res.json({
+      user: sanitizeUser(req.user),
+      profile: serializeProfile(profileRow),
+      progress: {
+        quizzesTaken: (progress.completedQuizzes || []).length,
+        labsDone: (progress.completedLabs || []).length,
+        subnetAttempts: (progress.subnetResults || []).length,
+        bestQuizScore: progress.bestScore || 0
+      }
+    });
+  } catch (error) {
+    console.error("profile load failed", error);
+    return res.status(500).json({ error: error.message || "Failed to load profile." });
+  }
+});
+
+router.put("/auth/profile", requireAuth, async (req, res) => {
+  try {
+    const displayName = trimText(req.body.displayName || req.body.display_name, 80);
+    const fullName = trimOptionalText(req.body.fullName || req.body.full_name, 120);
+    const phone = trimOptionalText(req.body.phone, 40);
+    const location = trimOptionalText(req.body.location, 80);
+    const bio = trimOptionalText(req.body.bio, 280);
+
+    if (displayName.length < 2) {
+      return res.status(400).json({ error: "Display name must be at least 2 characters." });
+    }
+
+    const admin = createSupabaseAdminClient();
+    const { error } = await admin
+      .from("profiles")
+      .upsert({
+        id: req.user.id,
+        email: normalizeEmail(req.user.email),
+        display_name: displayName,
+        full_name: fullName,
+        phone,
+        location,
+        bio,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: "id"
+      });
+
+    if (error) {
+      return res.status(500).json({ error: error.message || "Failed to update profile." });
+    }
+
+    const { error: authUpdateError } = await admin.auth.admin.updateUserById(req.user.id, {
+      user_metadata: {
+        ...(req.user.user_metadata || {}),
+        name: displayName
+      }
+    });
+
+    if (authUpdateError) {
+      return res.status(500).json({ error: authUpdateError.message || "Failed to update account details." });
+    }
+
+    const nextUser = {
+      ...req.user,
+      user_metadata: {
+        ...(req.user.user_metadata || {}),
+        name: displayName
+      }
+    };
+
+    const profileRow = await loadProfileRecord(admin, req.user.id);
+    return res.json({
+      user: sanitizeUser(nextUser),
+      profile: serializeProfile(profileRow)
+    });
+  } catch (error) {
+    console.error("profile update failed", error);
+    return res.status(500).json({ error: error.message || "Failed to update profile." });
+  }
+});
+
+router.delete("/auth/account", requireAuth, async (req, res) => {
+  try {
+    const confirm = trimText(req.body.confirm, 20).toUpperCase();
+    if (confirm !== "DELETE") {
+      return res.status(400).json({ error: 'Type "DELETE" to confirm account removal.' });
+    }
+
+    const admin = createSupabaseAdminClient();
+    const { error } = await admin.auth.admin.deleteUser(req.user.id);
+
+    if (error) {
+      return res.status(500).json({ error: error.message || "Failed to delete account." });
+    }
+
+    clearSessionCookies(res);
+    return res.json({ deleted: true, message: "Account deleted." });
+  } catch (error) {
+    console.error("account delete failed", error);
+    return res.status(500).json({ error: error.message || "Failed to delete account." });
   }
 });
 

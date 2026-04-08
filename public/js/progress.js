@@ -125,6 +125,25 @@
     return setSession(null);
   }
 
+  async function fetchProfile() {
+    return request("/auth/profile");
+  }
+
+  async function updateProfile(payload) {
+    return request("/auth/profile", {
+      method: "PUT",
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async function deleteAccount(payload) {
+    await request("/auth/account", {
+      method: "DELETE",
+      body: JSON.stringify(payload || {})
+    });
+    return setSession(null);
+  }
+
   window.ProgressAPI = {
     request,
     formatDate,
@@ -138,6 +157,9 @@
     resendSignupOtp,
     login,
     logout,
+    fetchProfile,
+    updateProfile,
+    deleteAccount,
     getProgress: () => request("/progress"),
     fetchDashboard: () => request("/dashboard"),
     saveQuizResult(payload) {

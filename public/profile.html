@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Profile - RouteForge</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="profile">
+  <header class="topbar">
+    <nav class="nav">
+      <a class="brand" href="index.html">RouteForge NetLab</a>
+      <div class="nav-links">
+        <a href="index.html">Dashboard</a>
+        <a href="learn.html">Learn</a>
+        <a href="quizzes.html">Quizzes</a>
+        <a href="subnet-trainer.html">Subnet</a>
+        <a href="calculators.html">Calculators</a>
+        <a href="labs.html">Labs</a>
+        <a href="flashcards.html">Flashcards</a>
+        <a href="cli-simulator.html">CLI</a>
+        <a href="topology-builder.html">Topology</a>
+        <a href="cheat-sheets.html">Cheat Sheets</a>
+      </div>
+      <div id="nav-auth" class="nav-auth">
+        <div class="auth-pill">
+          <span class="chip auth-chip">Guest mode</span>
+          <button type="button" id="auth-login-button" class="auth-login-btn">Sign In</button>
+          <button type="button" id="auth-register-button" class="btn btn-primary auth-register-btn">Create Account</button>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container profile-shell" id="profile-root">
+    <section class="hero profile-hero">
+      <h1>Your Profile</h1>
+      <p>Keep your RouteForge account details up to date, sync your display name, and manage your account from one place.</p>
+      <div class="toolbar">
+        <a class="btn btn-primary" href="index.html">Back to Dashboard</a>
+      </div>
+    </section>
+
+    <section id="profile-loading" class="card profile-loading" style="margin-top:14px;">
+      <h3>Loading profile...</h3>
+      <p class="muted">Fetching your account details and saved learning progress.</p>
+    </section>
+
+    <section id="profile-guest" class="card profile-guest is-hidden" style="margin-top:14px;">
+      <div class="lab-card-top">
+        <div>
+          <h3>Sign in to manage your profile</h3>
+          <p class="muted">Create an account or sign in to edit your personal details and keep your progress synced.</p>
+        </div>
+        <div class="toolbar">
+          <button type="button" id="profile-signin" class="btn btn-primary">Sign In</button>
+          <button type="button" id="profile-register">Create Account</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="profile-content" class="profile-grid is-hidden" style="margin-top:14px;">
+      <aside class="card profile-summary">
+        <div class="lab-card-top">
+          <div>
+            <h3>Account Snapshot</h3>
+            <p class="muted">Your profile row and the account details tied to it.</p>
+          </div>
+        </div>
+
+        <div class="profile-meta">
+          <div>
+            <span>Email</span>
+            <strong id="profile-email">-</strong>
+          </div>
+          <div>
+            <span>Display name</span>
+            <strong id="profile-display-name">-</strong>
+          </div>
+          <div>
+            <span>Member since</span>
+            <strong id="profile-created-at">-</strong>
+          </div>
+          <div>
+            <span>Last updated</span>
+            <strong id="profile-updated-at">-</strong>
+          </div>
+        </div>
+
+        <div class="profile-stats">
+          <div class="profile-stat">
+            <span>Quizzes</span>
+            <strong id="profile-quizzes">0</strong>
+          </div>
+          <div class="profile-stat">
+            <span>Subnet attempts</span>
+            <strong id="profile-subnet">0</strong>
+          </div>
+          <div class="profile-stat">
+            <span>Labs</span>
+            <strong id="profile-labs">0</strong>
+          </div>
+          <div class="profile-stat">
+            <span>Best quiz score</span>
+            <strong id="profile-best">0%</strong>
+          </div>
+        </div>
+      </aside>
+
+      <section class="card profile-form-card">
+        <div class="lab-card-top">
+          <div>
+            <h3>Edit Personal Info</h3>
+            <p class="muted">These fields are stored with your account so you can keep a fuller profile in RouteForge.</p>
+          </div>
+        </div>
+
+        <form id="profile-form" class="profile-form">
+          <div class="profile-form-grid">
+            <div class="profile-span-2">
+              <label for="profile-display-name-input">Display name</label>
+              <input id="profile-display-name-input" maxlength="80" placeholder="What RouteForge should call you" required>
+            </div>
+            <div>
+              <label for="profile-full-name-input">Full name</label>
+              <input id="profile-full-name-input" maxlength="120" placeholder="Your full name">
+            </div>
+            <div>
+              <label for="profile-phone-input">Phone</label>
+              <input id="profile-phone-input" maxlength="40" placeholder="+1 555 123 4567">
+            </div>
+            <div>
+              <label for="profile-location-input">Location</label>
+              <input id="profile-location-input" maxlength="80" placeholder="City, country">
+            </div>
+            <div class="profile-span-2">
+              <label for="profile-bio-input">Bio</label>
+              <textarea id="profile-bio-input" rows="5" maxlength="280" placeholder="A short note about your networking goals."></textarea>
+            </div>
+          </div>
+
+          <div class="toolbar profile-actions">
+            <button type="submit" id="profile-save-button" class="btn btn-primary">Save Changes</button>
+            <button type="button" id="profile-reset-button">Reset</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card profile-danger-card">
+        <div class="lab-card-top">
+          <div>
+            <h3>Delete Account</h3>
+            <p class="muted">This removes your RouteForge account and associated synced progress permanently.</p>
+          </div>
+        </div>
+
+        <div class="profile-danger">
+          <p class="profile-danger-note">Type <strong>DELETE</strong> below to confirm you want to remove this account.</p>
+          <div class="profile-danger-row">
+            <div class="profile-danger-input">
+              <label for="profile-delete-confirm">Confirmation</label>
+              <input id="profile-delete-confirm" maxlength="20" placeholder="DELETE">
+            </div>
+            <button type="button" id="profile-delete-button" class="btn btn-danger">Delete Account</button>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="js/progress.js" defer></script>
+  <script src="js/main.js" defer></script>
+  <script src="js/profile.js" defer></script>
+</body>
+</html>

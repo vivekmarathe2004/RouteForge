@@ -125,6 +125,11 @@
     }
   }
 
+  window.RouteForgeNotify = {
+    showToast,
+    queueFlashToast
+  };
+
   function authElements() {
     return {
       navAuth: document.getElementById("nav-auth"),
@@ -540,6 +545,7 @@
   function bindAuthNavButtons() {
     const loginButton = document.getElementById("auth-login-button");
     const registerButton = document.getElementById("auth-register-button");
+    const profileButton = document.getElementById("auth-profile-button");
     const logoutButton = document.getElementById("auth-logout-button");
 
     if (loginButton && loginButton.dataset.bound !== "true") {
@@ -550,6 +556,13 @@
     if (registerButton && registerButton.dataset.bound !== "true") {
       registerButton.dataset.bound = "true";
       registerButton.addEventListener("click", () => openAuthModal("register"));
+    }
+
+    if (profileButton && profileButton.dataset.bound !== "true") {
+      profileButton.dataset.bound = "true";
+      profileButton.addEventListener("click", () => {
+        window.location.href = "profile.html";
+      });
     }
 
     if (logoutButton && logoutButton.dataset.bound !== "true") {
@@ -683,6 +696,7 @@
       navAuth.innerHTML = `
         <div class="auth-pill">
           <span class="auth-guest-label">Signed in as ${escapeHtml(session.user.name)}</span>
+          ${page === "profile" ? '<span class="chip auth-chip">Profile</span>' : '<button type="button" id="auth-profile-button" class="auth-profile-btn">Profile</button>'}
           <button type="button" id="auth-logout-button" class="auth-logout-btn">Sign Out</button>
         </div>
       `;

@@ -6,9 +6,8 @@ const {
 function sanitizeUser(user) {
   if (!user) return null;
 
-  const displayName = user.user_metadata && user.user_metadata.name
-    ? String(user.user_metadata.name).trim()
-    : "";
+  const metadata = user.user_metadata || {};
+  const displayName = String(metadata.name || metadata.display_name || metadata.full_name || "").trim();
 
   return {
     id: user.id,

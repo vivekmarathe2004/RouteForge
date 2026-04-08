@@ -2,9 +2,25 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   email text not null,
   display_name text not null,
+  full_name text,
+  phone text,
+  location text,
+  bio text,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.profiles
+  add column if not exists full_name text;
+
+alter table public.profiles
+  add column if not exists phone text;
+
+alter table public.profiles
+  add column if not exists location text;
+
+alter table public.profiles
+  add column if not exists bio text;
 
 create unique index if not exists profiles_email_unique_idx
   on public.profiles (lower(email));

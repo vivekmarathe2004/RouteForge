@@ -129,11 +129,13 @@ GET /health
 Learning content still lives in `data/` as read-only JSON. User accounts, quiz history, subnet history, lab completions, and synced lab step progress now live in PostgreSQL.
 
 Production data is stored in Supabase Auth plus these app tables:
-- `profiles`
+- `profiles` - account identity plus display name, full name, phone, location, and bio
 - `quiz_attempts`
 - `subnet_attempts`
 - `lab_completions`
 - `lab_step_progress`
+
+The profile page at `profile.html` lets signed-in users edit those details and delete their account.
 
 ---
 
@@ -149,6 +151,7 @@ RouteForge/
     supabase.js
   public/
     index.html
+    profile.html
     learn.html
     quizzes.html
     subnet-trainer.html
@@ -169,6 +172,7 @@ RouteForge/
       cli-simulator.js
       topology-builder.js
       progress.js
+      profile.js
   data/
     ccna-topics.json
     ccnp-topics.json
