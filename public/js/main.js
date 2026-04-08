@@ -67,28 +67,141 @@
     return stack;
   }
 
-  function showToast(message, tone = "info", timeout = 3600) {
-    if (!message) return null;
+  const toastDefaults = {
+    info: 3600,
+    success: 3000,
+    warning: 4200,
+    error: 5200
+  };
+  const toastState = {
+    entries: new Map(),
+    order: []
+  };
+
+  function normalizeToastTone(tone) {
+    const value = String(tone || "info").toLowerCase();
+    if (value === "status-good") return "success";
+    if (value === "status-bad") return "error";
+    if (value === "status-warn") return "warning";
+    if (value === "muted") return "info";
+    if (["success", "warning", "error", "info"].includes(value)) return value;
+    return "info";
+  }
+
+  function normalizeToastInput(messageOrOptions, tone, timeout) {
+    if (messageOrOptions && typeof messageOrOptions === "object" && !Array.isArray(messageOrOptions)) {
+      const config = messageOrOptions;
+      return {
+        message: String(config.message || "").trim(),
+        tone: normalizeToastTone(config.tone),
+        timeout: Number.isFinite(config.timeout) ? config.timeout : undefined,
+        sticky: Boolean(config.sticky),
+        key: config.key ? String(config.key) : ""
+      };
+    }
+
+    return {
+      message: String(messageOrOptions || "").trim(),
+      tone: normalizeToastTone(tone),
+      timeout: Number.isFinite(timeout) ? timeout : undefined,
+      sticky: false,
+      key: ""
+    };
+  }
+
+  function toastKey(message, tone, key) {
+    if (key) return key;
+    return `${tone}:${String(message).trim().replace(/\s+/g, " ").slice(0, 120)}`;
+  }
+
+  function dismissToast(toast) {
+    if (!toast || toast.dataset.toastDismissed === "true") return;
+    toast.dataset.toastDismissed = "true";
+
+    if (toast._toastTimer) {
+      window.clearTimeout(toast._toastTimer);
+      toast._toastTimer = null;
+    }
+
+    toast.classList.remove("is-visible");
+    window.setTimeout(() => {
+      const key = toast.dataset.toastKey;
+      if (key && toastState.entries.get(key) === toast) {
+        toastState.entries.delete(key);
+      }
+      const index = toastState.order.indexOf(toast);
+      if (index >= 0) {
+        toastState.order.splice(index, 1);
+      }
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 220);
+  }
+
+  function showToast(messageOrOptions, tone = "info", timeout) {
+    const config = normalizeToastInput(messageOrOptions, tone, timeout);
+    if (!config.message) return null;
+
+    const finalTone = config.tone;
+    const finalTimeout = config.sticky
+      ? 0
+      : Number.isFinite(config.timeout)
+        ? Math.max(1400, config.timeout)
+        : (toastDefaults[finalTone] || toastDefaults.info);
+    const key = toastKey(config.message, finalTone, config.key);
+    const existing = toastState.entries.get(key);
+
+    if (existing && existing.dataset.toastDismissed !== "true") {
+      existing.className = `toast toast-${finalTone} is-visible`;
+      existing.setAttribute("role", finalTone === "error" ? "alert" : "status");
+      const messageNode = existing.querySelector(".toast-message");
+      if (messageNode) {
+        messageNode.textContent = config.message;
+      }
+      if (existing._toastTimer) {
+        window.clearTimeout(existing._toastTimer);
+      }
+      if (finalTimeout > 0) {
+        existing._toastTimer = window.setTimeout(() => dismissToast(existing), finalTimeout);
+      }
+      return existing;
+    }
 
     const stack = ensureToastUi();
     const toast = document.createElement("div");
-    toast.className = `toast toast-${tone}`;
-    toast.setAttribute("role", tone === "error" ? "alert" : "status");
-    toast.textContent = message;
+    toast.className = `toast toast-${finalTone}`;
+    toast.setAttribute("role", finalTone === "error" ? "alert" : "status");
+    toast.dataset.toastKey = key;
+    toast.innerHTML = `
+      <div class="toast-body">
+        <span class="toast-message"></span>
+      </div>
+      <button type="button" class="toast-close" aria-label="Dismiss notification">×</button>
+    `;
+    toast.querySelector(".toast-message").textContent = config.message;
+
+    const closeButton = toast.querySelector(".toast-close");
+    if (closeButton) {
+      closeButton.addEventListener("click", () => dismissToast(toast));
+    }
+
     stack.appendChild(toast);
+    toastState.entries.set(key, toast);
+    toastState.order.push(toast);
+
+    while (toastState.order.length > 4) {
+      const oldest = toastState.order.shift();
+      dismissToast(oldest);
+    }
 
     requestAnimationFrame(() => {
       toast.classList.add("is-visible");
     });
 
-    window.setTimeout(() => {
-      toast.classList.remove("is-visible");
-      window.setTimeout(() => {
-        if (toast.parentNode) {
-          toast.parentNode.removeChild(toast);
-        }
-      }, 220);
-    }, timeout);
+    if (finalTimeout > 0) {
+      toast._toastTimer = window.setTimeout(() => dismissToast(toast), finalTimeout);
+    }
 
     return toast;
   }

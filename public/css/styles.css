@@ -512,6 +512,10 @@ button:disabled {
 }
 
 .toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  justify-content: space-between;
   pointer-events: auto;
   padding: 12px 14px;
   border-radius: 14px;
@@ -524,6 +528,36 @@ button:disabled {
   opacity: 0;
   transform: translateY(-8px) scale(0.98);
   transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.toast-body {
+  display: grid;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.toast-message {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.toast-close {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 999px;
+  line-height: 1;
+  font-size: 1.15rem;
+}
+
+.toast-close:hover {
+  background: rgba(91, 99, 197, 0.12);
+  box-shadow: none;
 }
 
 .toast.is-visible {
