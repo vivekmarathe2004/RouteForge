@@ -5,6 +5,7 @@
   let pendingOtpEmail = "";
   let authSubmitting = false;
   let capsLockToastVisible = false;
+  const flashToastKey = "routeforge:flash-toast";
   const navConfig = [
     {
       type: "link",
@@ -90,6 +91,38 @@
     }, timeout);
 
     return toast;
+  }
+
+  function queueFlashToast(message, tone = "info", timeout = 3600) {
+    if (!message) return;
+
+    try {
+      sessionStorage.setItem(
+        flashToastKey,
+        JSON.stringify({
+          message,
+          tone,
+          timeout
+        })
+      );
+    } catch (_error) {
+      showToast(message, tone, timeout);
+    }
+  }
+
+  function consumeFlashToast() {
+    try {
+      const raw = sessionStorage.getItem(flashToastKey);
+      if (!raw) return;
+
+      sessionStorage.removeItem(flashToastKey);
+      const payload = JSON.parse(raw);
+      if (payload && payload.message) {
+        showToast(payload.message, payload.tone || "info", payload.timeout || 3600);
+      }
+    } catch (_error) {
+      // Ignore flash toast parsing/storage issues.
+    }
   }
 
   function authElements() {
@@ -586,6 +619,7 @@
           email: pendingOtpEmail || ui.email.value.trim(),
           token: ui.otp.value.trim()
         });
+        queueFlashToast("Email verified successfully. You're signed in.", "success", 4200);
         closeAuthModal();
         window.location.reload();
         return;
@@ -812,6 +846,7 @@
   document.addEventListener("DOMContentLoaded", async () => {
     renderNavigation();
     ensureAuthUi();
+    consumeFlashToast();
     switchAuthMode("login");
     bindShortcuts();
     bindAuthNavButtons();
