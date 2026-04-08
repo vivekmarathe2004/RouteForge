@@ -135,7 +135,7 @@ Production data is stored in Supabase Auth plus these app tables:
 - `lab_completions`
 - `lab_step_progress`
 
-The profile page at `profile.html` lets signed-in users edit those details and delete their account.
+The profile page at `profile.html` lets signed-in users edit those details and delete their account. It is text-only and does not store profile photos or image uploads.
 
 ---
 
