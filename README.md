@@ -11,6 +11,7 @@ RouteForge is a browser-first CCNA/CCNP learning platform that combines structur
 - Drag-and-drop topology builder with cable types and port-level wiring.
 - Subnet trainer, calculators, flashcards, quizzes, and cheat sheets.
 - Dashboard with daily questions, recommendations, and progress insights.
+- Shared auth modal with password show/hide, confirm-password validation, caps-lock warnings, and live password guidance.
 
 ---
 
