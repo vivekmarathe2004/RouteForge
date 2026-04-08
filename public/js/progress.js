@@ -87,7 +87,29 @@
       method: "POST",
       body: JSON.stringify(payload)
     });
+    if (data && data.user) {
+      return setSession(data);
+    }
+    return data;
+  }
+
+  async function startRegistration(payload) {
+    return register(payload);
+  }
+
+  async function verifySignupOtp(payload) {
+    const data = await request("/auth/register/verify", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
     return setSession(data);
+  }
+
+  async function resendSignupOtp(payload) {
+    return request("/auth/register/resend", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
   }
 
   async function login(payload) {
@@ -111,6 +133,9 @@
     isAuthenticated,
     onAuthChange,
     register,
+    startRegistration,
+    verifySignupOtp,
+    resendSignupOtp,
     login,
     logout,
     getProgress: () => request("/progress"),

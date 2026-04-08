@@ -89,13 +89,42 @@ function validateEmail(email) {
 
 function authErrorStatus(error, defaultStatus = 400) {
   const message = String((error && error.message) || "").toLowerCase();
-  if (message.includes("already") || message.includes("exists") || message.includes("registered")) {
+  if (message.includes("already") || message.includes("exists") || message.includes("registered") || message.includes("duplicate")) {
     return 409;
   }
-  if (message.includes("invalid login") || message.includes("invalid") || message.includes("password")) {
+  if (message.includes("not confirmed") || message.includes("not verified") || message.includes("verify your email")) {
+    return 403;
+  }
+  if (message.includes("invalid login") || message.includes("invalid") || message.includes("password") || message.includes("otp") || message.includes("token")) {
     return 401;
   }
   return defaultStatus;
+}
+
+async function findUserByEmail(admin, email) {
+  const perPage = 100;
+  let page = 1;
+
+  while (page) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+
+    if (error) {
+      throw new Error(error.message || "Failed to inspect existing users.");
+    }
+
+    const match = (data.users || []).find((user) => normalizeEmail(user.email) === email);
+    if (match) {
+      return match;
+    }
+
+    if (!data.nextPage || (data.users || []).length < perPage) {
+      return null;
+    }
+
+    page = data.nextPage;
+  }
+
+  return null;
 }
 
 router.use(attachSession);
@@ -120,37 +149,141 @@ router.post("/auth/register", async (req, res) => {
 
     const admin = createSupabaseAdminClient();
     const authClient = createSupabaseAuthClient();
+    const existingUser = await findUserByEmail(admin, email);
 
-    const { data: created, error: createError } = await admin.auth.admin.createUser({
+    if (existingUser && existingUser.email_confirmed_at) {
+      return res.status(409).json({
+        error: "That email is already registered. Sign in instead."
+      });
+    }
+
+    if (existingUser && !existingUser.email_confirmed_at) {
+      const { error: updateError } = await admin.auth.admin.updateUserById(existingUser.id, {
+        password,
+        user_metadata: { name }
+      });
+
+      if (updateError) {
+        return res.status(authErrorStatus(updateError, 400)).json({
+          error: updateError.message || "Verification is already pending for this email."
+        });
+      }
+
+      const { error: resendError } = await authClient.auth.resend({
+        type: "signup",
+        email
+      });
+
+      if (resendError) {
+        return res.status(authErrorStatus(resendError, 400)).json({
+          error: resendError.message || "Unable to resend the verification code."
+        });
+      }
+
+      return res.status(202).json({
+        needsOtp: true,
+        email,
+        message: "A verification code was already sent to this email. Check your inbox and enter it here."
+      });
+    }
+
+    const { data, error } = await authClient.auth.signUp({
       email,
       password,
-      email_confirm: true,
-      user_metadata: { name }
+      options: {
+        data: { name }
+      }
     });
 
-    if (createError || !created || !created.user) {
-      return res.status(authErrorStatus(createError, 400)).json({
-        error: (createError && createError.message) || "Failed to create account."
+    if (error) {
+      return res.status(authErrorStatus(error, 400)).json({
+        error: error.message || "Failed to create account."
       });
     }
 
-    const { data: signInData, error: signInError } = await authClient.auth.signInWithPassword({
+    if (data && data.session && data.user) {
+      await upsertProfile(data.user);
+      setSessionCookies(res, data.session);
+      return res.status(201).json({ user: sanitizeUser(data.user), verified: true });
+    }
+
+    return res.status(202).json({
+      needsOtp: true,
       email,
-      password
+      message: "Check your email for the verification code. You will only have one account for this email address."
     });
-
-    if (signInError || !signInData || !signInData.session || !signInData.user) {
-      return res.status(500).json({
-        error: (signInError && signInError.message) || "Account created but sign-in failed."
-      });
-    }
-
-    await upsertProfile(signInData.user);
-    setSessionCookies(res, signInData.session);
-    return res.status(201).json({ user: sanitizeUser(signInData.user) });
   } catch (error) {
     console.error("register failed", error);
     return res.status(500).json({ error: error.message || "Failed to create account." });
+  }
+});
+
+router.post("/auth/register/verify", async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body.email);
+    const token = trimText(req.body.token, 32);
+
+    if (!validateEmail(email) || !token) {
+      return res.status(400).json({ error: "Email and verification code are required." });
+    }
+
+    const authClient = createSupabaseAuthClient();
+    const { data, error } = await authClient.auth.verifyOtp({
+      email,
+      token,
+      type: "email"
+    });
+
+    if (error || !data || !data.session || !data.user) {
+      return res.status(authErrorStatus(error, 400)).json({
+        error: (error && error.message) || "Invalid verification code."
+      });
+    }
+
+    await upsertProfile(data.user);
+    setSessionCookies(res, data.session);
+    return res.status(200).json({ user: sanitizeUser(data.user) });
+  } catch (error) {
+    console.error("verify email otp failed", error);
+    return res.status(500).json({ error: error.message || "Failed to verify email." });
+  }
+});
+
+router.post("/auth/register/resend", async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body.email);
+
+    if (!validateEmail(email)) {
+      return res.status(400).json({ error: "Enter a valid email address." });
+    }
+
+    const admin = createSupabaseAdminClient();
+    const authClient = createSupabaseAuthClient();
+    const existingUser = await findUserByEmail(admin, email);
+
+    if (!existingUser) {
+      return res.status(404).json({ error: "No pending account found for that email." });
+    }
+
+    if (existingUser.email_confirmed_at) {
+      return res.status(409).json({ error: "That email is already verified. Sign in instead." });
+    }
+
+    const { error } = await authClient.auth.resend({
+      type: "signup",
+      email
+    });
+
+    if (error) {
+      return res.status(authErrorStatus(error, 400)).json({
+        error: error.message || "Unable to resend the verification code."
+      });
+    }
+
+    return res.json({ email, message: "Verification code resent." });
+  } catch (error) {
+    console.error("resend email otp failed", error);
+    return res.status(500).json({ error: error.message || "Failed to resend verification code." });
   }
 });
 
@@ -170,9 +303,11 @@ router.post("/auth/login", async (req, res) => {
     });
 
     if (error || !data || !data.session || !data.user) {
-      return res.status(authErrorStatus(error, 401)).json({
-        error: (error && error.message) || "Invalid email or password."
-      });
+      const status = authErrorStatus(error, 401);
+      const message = status === 403
+        ? "Verify your email address with the code we sent before signing in."
+        : ((error && error.message) || "Invalid email or password.");
+      return res.status(status).json({ error: message });
     }
 
     await upsertProfile(data.user);

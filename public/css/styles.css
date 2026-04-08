@@ -498,6 +498,20 @@ button:disabled {
   gap: 12px;
 }
 
+.auth-credentials,
+.auth-otp-section {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-otp-actions {
+  margin-top: -2px;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
 .auth-label-row {
   display: flex;
   align-items: center;

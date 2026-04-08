@@ -11,7 +11,8 @@ RouteForge is a browser-first CCNA/CCNP learning platform that combines structur
 - Drag-and-drop topology builder with cable types and port-level wiring.
 - Subnet trainer, calculators, flashcards, quizzes, and cheat sheets.
 - Dashboard with daily questions, recommendations, and progress insights.
-- Shared auth modal with password show/hide, confirm-password validation, caps-lock warnings, and live password guidance.
+- Shared auth modal with password show/hide, confirm-password validation, caps-lock warnings, live password guidance, and email OTP verification.
+- Auth is enforced as one account per email address.
 
 ---
 
@@ -61,6 +62,8 @@ AUTH_REFRESH_COOKIE_NAME=routeforge_refresh_token
 AUTH_SESSION_MAX_AGE_MS=604800000
 PORT=3000
 ```
+
+New registrations now require email OTP verification, so Supabase email delivery must be configured for your project.
 
 Before you run the app, execute [supabase/schema.sql](supabase/schema.sql) in the Supabase SQL Editor to create the production tables RouteForge expects.
 
