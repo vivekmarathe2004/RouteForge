@@ -539,6 +539,13 @@ button:disabled {
   line-height: 1.4;
 }
 
+.auth-register-note {
+  padding: 10px 12px;
+  border: 1px solid rgba(91, 99, 197, 0.16);
+  border-radius: 12px;
+  background: rgba(91, 99, 197, 0.08);
+}
+
 .auth-field-copy.is-hidden {
   display: none;
 }

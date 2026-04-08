@@ -75,6 +75,7 @@
       confirm: document.getElementById("auth-confirm-password"),
       confirmToggle: document.getElementById("auth-confirm-toggle"),
       confirmMeta: document.getElementById("auth-confirm-meta"),
+      registerNote: document.getElementById("auth-register-note"),
       credentialsSection: document.getElementById("auth-credentials"),
       otpSection: document.getElementById("auth-otp-section"),
       otp: document.getElementById("auth-otp"),
@@ -180,6 +181,12 @@
     ui.nameRow.style.display = isRegister && !isVerifyStep ? "" : "none";
     ui.name.required = isRegister && !isVerifyStep;
     ui.submit.textContent = isVerifyStep ? "Verify Email" : (isRegister ? "Create Account" : "Sign In");
+    if (ui.registerNote) {
+      ui.registerNote.classList.toggle("is-hidden", !isRegister || isVerifyStep);
+      ui.registerNote.textContent = isRegister && !isVerifyStep
+        ? "We will email a verification code after you create the account. That code will appear in the next step."
+        : "";
+    }
     if (ui.otpBack) {
       ui.otpBack.classList.toggle("is-hidden", !isVerifyStep);
     }
@@ -424,6 +431,7 @@
                 <label for="auth-email">Email</label>
                 <input id="auth-email" type="email" autocomplete="email" maxlength="255" placeholder="you@example.com" required>
               </div>
+              <div id="auth-register-note" class="auth-field-copy auth-register-note muted is-hidden" aria-live="polite"></div>
               <div>
                 <div class="auth-label-row">
                   <label for="auth-password">Password</label>
