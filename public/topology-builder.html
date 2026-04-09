@@ -25,7 +25,7 @@
         <div class="topology-workspace-summary">
           <span class="chip">Drag from dock</span>
           <span class="chip">Double-click to quick add</span>
-          <span class="chip">Shift+Click for multi-select</span>
+          <span class="chip">Select mode for multi-select</span>
         </div>
       </div>
 
@@ -322,6 +322,7 @@
               <p class="topology-control-label">Workspace</p>
               <div class="topology-control-actions">
                 <button id="topology-mode-move" class="btn btn-primary" type="button">Move</button>
+                <button id="topology-mode-select" class="btn" type="button">Select</button>
                 <button id="topology-mode-connect" class="btn" type="button">Connect</button>
                 <button id="topology-snap" class="btn" type="button">Snap: On</button>
                 <button id="topology-clear" class="btn btn-danger" type="button">Clear Canvas</button>
@@ -437,7 +438,7 @@
             </div>
           </div>
 
-          <p id="topology-hint" class="topology-hint">Move mode: drag devices. Use Shift+Click to multi-select.</p>
+          <p id="topology-hint" class="topology-hint">Move mode: drag devices. Use Select mode or Shift+Click to multi-select.</p>
         </section>
 
         <aside class="topology-sidebar topology-inspector-panel">

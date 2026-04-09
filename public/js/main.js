@@ -503,6 +503,8 @@
       }
     }
 
+    navLinks.id = navLinks.id || "site-nav-links";
+
     navLinks.innerHTML = navConfig.map((entry, index) => {
       const isActive = entry.pages.includes(page);
       if (entry.type === "link") {
@@ -534,9 +536,84 @@
           <div class="nav-menu" role="menu" aria-label="${entry.label}">
             ${items}
           </div>
-        </div>
-      `;
+      </div>
+    `;
     }).join("");
+  }
+
+  function bindNavigation() {
+    const nav = document.querySelector(".nav");
+    if (!nav || nav.dataset.navBound === "true") return;
+    const navLinks = nav.querySelector(".nav-links");
+    if (!navLinks) return;
+
+    nav.dataset.navBound = "true";
+
+    let navToggle = nav.querySelector(".nav-toggle");
+    if (!navToggle) {
+      navToggle = document.createElement("button");
+      navToggle.type = "button";
+      navToggle.className = "nav-toggle";
+      navToggle.innerHTML = `
+        <span class="nav-toggle-copy">
+          <span class="nav-toggle-label">Menu</span>
+          <span class="nav-toggle-icon" aria-hidden="true">☰</span>
+        </span>
+      `;
+      nav.insertBefore(navToggle, navLinks);
+    }
+
+    navToggle.setAttribute("aria-controls", navLinks.id || "site-nav-links");
+    navToggle.setAttribute("aria-expanded", "false");
+
+    const setNavOpen = (open) => {
+      nav.classList.toggle("is-open", open);
+      navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    };
+
+    navToggle.addEventListener("click", () => {
+      setNavOpen(!nav.classList.contains("is-open"));
+    });
+
+    nav.addEventListener("click", (event) => {
+      const trigger = event.target.closest(".nav-group-trigger");
+      if (!trigger) return;
+      const group = trigger.closest(".nav-group");
+      if (!group) return;
+      event.preventDefault();
+      const isOpen = group.classList.toggle("is-open");
+      trigger.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    });
+
+    navLinks.addEventListener("click", (event) => {
+      if (event.target.closest("a")) {
+        setNavOpen(false);
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!nav.contains(event.target)) {
+        setNavOpen(false);
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        setNavOpen(false);
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 900) {
+        setNavOpen(false);
+      }
+    });
+
+    nav.querySelectorAll(".nav-group").forEach((group) => {
+      const trigger = group.querySelector(".nav-group-trigger");
+      if (!trigger) return;
+      trigger.setAttribute("aria-expanded", group.classList.contains("active") ? "true" : "false");
+    });
   }
 
   function ensureAuthUi() {
@@ -1037,6 +1114,7 @@
 
   document.addEventListener("DOMContentLoaded", async () => {
     renderNavigation();
+    bindNavigation();
     ensureAuthUi();
     consumeFlashToast();
     switchAuthMode("login");

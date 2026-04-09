@@ -23,6 +23,8 @@
     recentDevices: "routeforge.topology.recent-devices"
   };
 
+  const supportsPointerEvents = "PointerEvent" in window;
+  const supportsCoarsePointer = window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
   const NODE_WIDTH = 128;
   const NODE_HEIGHT = 96;
   const PERSIST_DELAY_MS = 120;
@@ -44,7 +46,8 @@
     searchTerm: "",
     persistTimer: null,
     renderQueued: false,
-    pendingRender: { nodes: false, connections: false }
+    pendingRender: { nodes: false, connections: false },
+    activePointerId: null
   };
 
   const el = {
@@ -53,6 +56,7 @@
     clear: document.getElementById("topology-clear"),
     hint: document.getElementById("topology-hint"),
     modeMove: document.getElementById("topology-mode-move"),
+    modeSelect: document.getElementById("topology-mode-select"),
     modeConnect: document.getElementById("topology-mode-connect"),
     linkType: document.getElementById("topology-link-type"),
     snap: document.getElementById("topology-snap"),
@@ -235,7 +239,13 @@
     if (el.deviceCount) el.deviceCount.textContent = String(state.nodes.length);
     if (el.linkCount) el.linkCount.textContent = String(state.connections.length);
     if (el.selectedCount) el.selectedCount.textContent = String(state.selectedNodeIds.size);
-    if (el.modeLabel) el.modeLabel.textContent = state.mode === "connect" ? "Connect" : "Move";
+    if (el.modeLabel) {
+      el.modeLabel.textContent = state.mode === "connect"
+        ? "Connect"
+        : state.mode === "select"
+          ? "Select"
+          : "Move";
+    }
     if (el.cableLabel) {
       const value = state.linkType || "ethernet";
       el.cableLabel.textContent = value.charAt(0).toUpperCase() + value.slice(1);
@@ -690,6 +700,62 @@
     return true;
   }
 
+  function beginNodeDrag(node, event) {
+    if (state.mode !== "move") return;
+    if (supportsPointerEvents) {
+      if (!event.isPrimary || event.button !== 0) return;
+      state.activePointerId = event.pointerId;
+    } else if (event.button !== 0) {
+      return;
+    }
+
+    const rect = canvasRect();
+    state.movingNodeId = node.id;
+    state.dragOffset = {
+      x: event.clientX - rect.left - node.x,
+      y: event.clientY - rect.top - node.y
+    };
+
+    if (supportsPointerEvents && event.currentTarget && typeof event.currentTarget.setPointerCapture === "function") {
+      try {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      } catch (_error) {
+        // ignore capture issues
+      }
+    }
+
+    if (event.preventDefault) {
+      event.preventDefault();
+    }
+  }
+
+  function moveDraggedNode(event) {
+    if (!state.movingNodeId) return;
+    if (supportsPointerEvents && state.activePointerId !== event.pointerId) return;
+
+    const node = getNode(state.movingNodeId);
+    if (!node) return;
+
+    const rect = canvasRect();
+    const nextX = clamp(snapValue(event.clientX - rect.left - state.dragOffset.x), 0, Math.max(0, rect.width - NODE_WIDTH));
+    const nextY = clamp(snapValue(event.clientY - rect.top - state.dragOffset.y), 0, Math.max(0, rect.height - NODE_HEIGHT));
+
+    node.x = nextX;
+    node.y = nextY;
+    queueRender({ nodes: true, connections: true });
+  }
+
+  function finishNodeDrag(event) {
+    if (!state.movingNodeId) return;
+    if (supportsPointerEvents && state.activePointerId !== event.pointerId) return;
+
+    renderNodes();
+    renderConnections();
+    schedulePersistCurrentTopology(true);
+    state.movingNodeId = null;
+    state.activePointerId = null;
+  }
+
   function renderNodes() {
     Array.from(el.canvas.querySelectorAll(".node")).forEach((node) => node.remove());
     state.nodes.forEach((node) => {
@@ -731,11 +797,15 @@
         </div>
       `;
 
-      div.addEventListener("mousedown", (event) => {
-        if (state.mode !== "move") return;
-        state.movingNodeId = node.id;
-        state.dragOffset = { x: event.offsetX, y: event.offsetY };
-      });
+      if (supportsPointerEvents) {
+        div.addEventListener("pointerdown", (event) => {
+          beginNodeDrag(node, event);
+        });
+      } else {
+        div.addEventListener("mousedown", (event) => {
+          beginNodeDrag(node, event);
+        });
+      }
 
       div.addEventListener("click", (event) => {
         const portButton = event.target.closest("[data-port]");
@@ -856,7 +926,7 @@
       return;
     }
 
-    if (event.shiftKey) {
+    if (event.shiftKey || state.mode === "select") {
       if (state.selectedNodeIds.has(nodeId)) {
         state.selectedNodeIds.delete(nodeId);
       } else {
@@ -903,6 +973,13 @@
           addDeviceFromPalette(item.dataset.device, item.dataset.model || "");
         });
       }
+
+      if (supportsCoarsePointer) {
+        item.addEventListener("click", (event) => {
+          if (event.target.closest("[data-add-device]")) return;
+          addDeviceFromPalette(item.dataset.device, item.dataset.model || "");
+        });
+      }
     });
 
     el.canvas.addEventListener("dragover", (event) => {
@@ -936,26 +1013,15 @@
   }
 
   function bindMove() {
-    document.addEventListener("mousemove", (event) => {
-      if (!state.movingNodeId) return;
-      const node = getNode(state.movingNodeId);
-      if (!node) return;
+    if (supportsPointerEvents) {
+      document.addEventListener("pointermove", moveDraggedNode);
+      document.addEventListener("pointerup", finishNodeDrag);
+      document.addEventListener("pointercancel", finishNodeDrag);
+      return;
+    }
 
-      const rect = canvasRect();
-      node.x = clamp(snapValue(event.clientX - rect.left - state.dragOffset.x), 0, rect.width - NODE_WIDTH);
-      node.y = clamp(snapValue(event.clientY - rect.top - state.dragOffset.y), 0, rect.height - NODE_HEIGHT);
-
-      queueRender({ nodes: true, connections: true });
-    });
-
-    document.addEventListener("mouseup", () => {
-      if (state.movingNodeId) {
-        renderNodes();
-        renderConnections();
-        schedulePersistCurrentTopology(true);
-      }
-      state.movingNodeId = null;
-    });
+    document.addEventListener("mousemove", moveDraggedNode);
+    document.addEventListener("mouseup", finishNodeDrag);
   }
 
   function bindClear() {
@@ -978,10 +1044,13 @@
     state.connectFrom = null;
     if (mode === "connect") {
       setHint("Connect mode: pick a cable type and click two device ports.");
+    } else if (mode === "select") {
+      setHint("Select mode: tap devices to add or remove them from the selection.");
     } else {
-      setHint("Move mode: drag devices. Use Shift+Click to multi-select.");
+      setHint("Move mode: drag devices with your mouse or finger. Use Select mode or Shift+Click to multi-select.");
     }
     if (el.modeMove) el.modeMove.classList.toggle("btn-primary", mode === "move");
+    if (el.modeSelect) el.modeSelect.classList.toggle("btn-primary", mode === "select");
     if (el.modeConnect) el.modeConnect.classList.toggle("btn-primary", mode === "connect");
     renderNodes();
     updateWorkspaceStats();
@@ -1004,6 +1073,9 @@
   function bindModeControls() {
     if (el.modeMove) {
       el.modeMove.addEventListener("click", () => setMode("move"));
+    }
+    if (el.modeSelect) {
+      el.modeSelect.addEventListener("click", () => setMode("select"));
     }
     if (el.modeConnect) {
       el.modeConnect.addEventListener("click", () => setMode("connect"));
