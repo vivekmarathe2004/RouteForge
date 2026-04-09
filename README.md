@@ -4,6 +4,14 @@ RouteForge is a browser-first CCNA/CCNP learning platform that combines structur
 
 ---
 
+**Recent Update**
+- Mobile responsiveness pass for Android phones, tablets, and iPhones.
+- Added a collapsed mobile navigation shell and touch-friendlier controls.
+- Improved CLI and topology builder layouts for smaller screens.
+- Upgraded topology builder dragging to work better with touch and pointer input.
+
+---
+
 **Highlights**
 - Structured CCNA and CCNP learning modules with real CLI examples.
 - Interactive labs with step-by-step validation using CLI history.
